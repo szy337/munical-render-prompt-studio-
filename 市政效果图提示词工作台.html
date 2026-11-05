@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>效果图提示词工作台 · 投标级出图流程工具</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232E6A4C'/%3E%3Cpath d='M8 22 L14 10 L19 16 L24 7' stroke='%23E2ECE5' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='24' cy='7' r='2.4' fill='%23BC6429'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   设计 Token：工程图纸风（米灰底 + 松针绿 + 赭橙标记）
+   ============================================================ */
+:root{
+  --bg:#F2F1EC;
+  --bg-deep:#E9E7DF;
+  --panel:#FBFAF6;
+  --panel-2:#F0EEE7;
+  --ink:#1F2420;
+  --ink-2:#4E554D;
+  --ink-3:#82887E;
+  --line:#DAD7CC;
+  --line-strong:#C2BFB2;
+  --green:#2E6A4C;
+  --green-deep:#235039;
+  --green-soft:#E2ECE5;
+  --ochre:#BC6429;
+  --ochre-soft:#F5E8DA;
+  --blue:#3C6178;
+  --blue-soft:#E1E9EF;
+  --red:#B23B2E;
+  --red-soft:#F4E0DC;
+  --shadow:0 1px 2px rgba(31,36,32,.05),0 4px 14px rgba(31,36,32,.05);
+  --font-sans:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB","Source Han Sans SC",sans-serif;
+  --font-mono:"Cascadia Code","JetBrains Mono","Consolas","Sarasa Mono SC",monospace;
+  --header-h:56px;
+  --side-w:208px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-sans);
+  background:var(--bg);
+  color:var(--ink);
+  font-size:14px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink)}
+::selection{background:var(--green-soft)}
+/* 滚动条 */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-3)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============================================================
+   顶栏
+   ============================================================ */
+.topbar{
+  height:var(--header-h);
+  background:var(--panel);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:18px;
+  padding:0 20px;
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:var(--side-w)}
+.brand-mark{width:34px;height:34px;border-radius:8px;flex:none}
+.brand-text{display:flex;flex-direction:column;line-height:1.25}
+.brand-text b{font-size:15px;letter-spacing:.3px}
+.brand-text span{font-size:11px;color:var(--ink-3);letter-spacing:.6px}
+.topbar-spacer{flex:1}
+.seg{
+  display:inline-flex;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:9px;padding:3px;gap:2px;
+}
+.seg button{
+  padding:5px 12px;border-radius:6px;color:var(--ink-2);
+  font-size:13px;white-space:nowrap;transition:all .15s;
+}
+.seg button:hover{color:var(--ink)}
+.seg button.active{background:var(--panel);color:var(--green-deep);font-weight:700;box-shadow:var(--shadow)}
+.seg.compact button{padding:5px 9px;font-size:12.5px}
+.topbar-label{font-size:12px;color:var(--ink-3);margin-right:-10px}
+
+/* ============================================================
+   整体布局与侧栏
+   ============================================================ */
+.app{display:flex;min-height:calc(100vh - var(--header-h))}
+.sidebar{
+  width:var(--side-w);flex:none;
+  background:var(--panel);
+  border-right:1px solid var(--line);
+  padding:14px 12px;
+  position:sticky;top:var(--header-h);
+  height:calc(100vh - var(--header-h));
+  overflow-y:auto;
+}
+.nav-item{
+  display:flex;align-items:center;gap:11px;
+  width:100%;text-align:left;
+  padding:9px 11px;border-radius:8px;
+  color:var(--ink-2);font-size:13.5px;
+  margin-bottom:3px;transition:all .15s;
+}
+.nav-item svg{width:18px;height:18px;flex:none;stroke:currentColor}
+.nav-item:hover{background:var(--panel-2);color:var(--ink)}
+.nav-item.active{background:var(--green-soft);color:var(--green-deep);font-weight:700}
+.side-note{
+  margin-top:16px;padding:11px 12px;border-radius:8px;
+  background:var(--panel-2);border:1px solid var(--line);
+  font-size:12px;color:var(--ink-3);line-height:1.7;
+}
+.side-note b{color:var(--ochre);display:block;margin-bottom:2px}
+.main{flex:1;min-width:0;padding:24px 28px 40px;width:100%;max-width:1680px;margin:0 auto}
+.view{display:none;animation:viewIn .22s ease}
+.view.active{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============================================================
+   通用组件
+   ============================================================ */
+.view-head{margin-bottom:20px}
+.view-head h1{font-size:21px;font-weight:700;letter-spacing:.3px}
+.view-head p{color:var(--ink-2);font-size:13.5px;margin-top:5px;max-width:760px}
+.card{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:18px 20px;margin-bottom:16px;
+}
+.card-title{
+  font-size:14px;font-weight:700;margin-bottom:13px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-title .idx{
+  width:21px;height:21px;border-radius:6px;background:var(--green);
+  color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);flex:none;
+}
+.card-title .hint{font-weight:400;font-size:12px;color:var(--ink-3);margin-left:4px}
+.field{margin-bottom:15px}
+.field:last-child{margin-bottom:0}
+.field-label{font-size:13px;color:var(--ink-2);font-weight:700;margin-bottom:7px;display:flex;justify-content:space-between;gap:8px}
+.field-label .tip{font-weight:400;color:var(--ink-3);font-size:11.5px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{
+  padding:6px 12px;border-radius:7px;
+  border:1px solid var(--line-strong);background:var(--panel);
+  color:var(--ink-2);font-size:12.5px;transition:all .13s;
+  user-select:none;
+}
+.chip:hover{border-color:var(--green);color:var(--green-deep)}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.chip.ochre.on{background:var(--ochre);border-color:var(--ochre)}
+.chip.blue.on{background:var(--blue);border-color:var(--blue)}
+select,textarea,.txtinput{
+  width:100%;background:var(--panel);border:1px solid var(--line-strong);
+  border-radius:8px;padding:8px 11px;outline:none;transition:border-color .15s;
+}
+select:focus,textarea:focus,.txtinput:focus{border-color:var(--green)}
+textarea{resize:vertical;line-height:1.7}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.switch-row{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.switch{width:38px;height:22px;border-radius:12px;background:var(--line-strong);position:relative;transition:background .18s;flex:none}
+.switch::after{content:"";position:absolute;top:2.5px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s}
+.switch.on{background:var(--green)}
+.switch.on::after{transform:translateX(16px)}
+.switch-row .sw-text{font-size:13px;color:var(--ink-2)}
+.switch-row .sw-text b{color:var(--ink)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px 18px;border-radius:9px;font-size:13.5px;font-weight:600;
+  transition:all .15s;border:1px solid transparent;
+}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none}
+.btn-primary{background:var(--green);color:#fff}
+.btn-primary:hover{background:var(--green-deep)}
+.btn-ghost{background:var(--panel);border-color:var(--line-strong);color:var(--ink-2)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green-deep)}
+.btn-ochre{background:var(--ochre);color:#fff}
+.btn-ochre:hover{background:#a55622}
+.btn-block{width:100%}
+.btn-sm{padding:6px 12px;font-size:12.5px}
+
+/* ============================================================
+   工作台双栏
+   ============================================================ */
+.studio-grid{display:grid;grid-template-columns:minmax(400px,500px) minmax(0,1fr);gap:22px;align-items:start}
+.studio-config{min-width:0}
+.studio-out{position:sticky;top:calc(var(--header-h) + 18px)}
+.out-tabs{display:flex;gap:3px;margin-bottom:0}
+.out-tab{
+  padding:8px 16px;font-size:13px;color:var(--ink-3);
+  border:1px solid var(--line);border-bottom:none;border-radius:9px 9px 0 0;
+  background:var(--panel-2);
+}
+.out-tab.active{background:var(--panel);color:var(--green-deep);font-weight:700}
+.out-box{
+  background:var(--panel);border:1px solid var(--line);border-radius:0 12px 12px 12px;
+  overflow:hidden;
+}
+.out-actions{display:flex;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);flex-wrap:wrap}
+.out-content{
+  padding:16px 18px;font-family:var(--font-mono);font-size:12.8px;
+  line-height:1.85;white-space:pre-wrap;word-break:break-word;
+  min-height:340px;max-height:56vh;overflow-y:auto;color:var(--ink);
+}
+.out-content .seg-h{color:var(--green);font-weight:700;display:block;margin-top:10px}
+.out-content .seg-h:first-child{margin-top:0}
+.out-content .warn{color:var(--ochre)}
+.prompt-meta{font-size:12px;color:var(--ink-3);padding:10px 14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* 工作流选择大卡 */
+.flow-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.flow-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:15px 16px;text-align:left;transition:all .16s;position:relative;
+  display:flex;flex-direction:column;
+}
+.flow-card svg{width:26px;height:26px;stroke:var(--green);fill:none;margin-bottom:9px;flex:none}
+.flow-card-text{display:block;min-width:0}
+.flow-card-text b{display:block;font-size:14px;margin-bottom:4px}
+.flow-card-text span{font-size:12px;color:var(--ink-3);line-height:1.6;display:block}
+.flow-card:hover{border-color:var(--green);box-shadow:var(--shadow)}
+.flow-card.on{border-color:var(--green);background:var(--green-soft)}
+.flow-card.on::after{content:"当前";position:absolute;top:11px;right:12px;font-size:11px;color:var(--green);font-weight:700}
+@media (min-width:1081px){
+  .flow-card{flex-direction:row;align-items:flex-start;gap:13px}
+  .flow-card svg{width:30px;height:30px;margin-bottom:0;margin-top:2px}
+}
+
+/* 参考图配置 */
+.ref-slots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ref-slot{border:1px dashed var(--line-strong);border-radius:10px;padding:12px;background:var(--panel-2)}
+.ref-slot b{font-size:12.5px;display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--blue)}
+.ref-slot b .num{width:18px;height:18px;border-radius:5px;background:var(--blue);color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.ref-slot p{font-size:11.5px;color:var(--ink-3);line-height:1.6}
+.ref-count{display:flex;gap:6px;align-items:center}
+
+/* 白话命令区 */
+.plain-card{background:linear-gradient(180deg,#f8f5ee,#f3f0e8);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px}
+.plain-head{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:4px}
+.plain-sub{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+.plain-textarea{width:100%;min-height:76px;border:1px solid var(--line-strong);border-radius:10px;padding:11px 12px;font-size:14px;line-height:1.6;resize:vertical;background:#fff;color:var(--ink)}
+.plain-textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(46,106,76,.12)}
+.plain-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.plain-examples{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.plain-ex{font-size:12px;background:#fff;border:1px solid var(--line);color:var(--ink-soft);border-radius:20px;padding:5px 12px;cursor:pointer}
+.plain-ex:hover{border-color:var(--green);color:var(--green)}
+.plain-result{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+.remark-box,.sop-chart-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.box-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-weight:700;font-size:13.5px}
+.conf-badge{font-size:11px;border-radius:20px;padding:2px 9px;font-weight:600}
+.conf-high{background:var(--green-soft);color:var(--green)}
+.conf-mid{background:#f6ead9;color:var(--ochre)}
+.conf-low{background:var(--red-soft);color:var(--red)}
+.remark-list{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.remark-list li{position:relative;padding-left:14px;line-height:1.5}
+.remark-list li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--green)}
+.remark-advice{margin-top:11px;border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--ink-soft);line-height:1.5}
+.remark-advice b{color:var(--ink)}
+
+/* SOP 纵向流程图 */
+.flow-chart{display:flex;flex-direction:column;align-items:stretch}
+.fc-node{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+.fc-dot{flex:none;width:25px;height:25px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.fc-t{font-size:12.5px;font-weight:600;line-height:1.4}
+.fc-link{width:2px;height:15px;background:var(--green);margin-left:23px;position:relative}
+.fc-link:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--green)}
+
+/* PS 指南与快捷键 */
+.ps-guide{display:flex;flex-direction:column;gap:8px}
+.ps-step{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.5}
+.ps-keys{display:flex;gap:5px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+kbd{font-family:Consolas,'Courier New',monospace;background:#2b302d;color:#eef3ef;border-radius:5px;padding:1px 6px;font-size:11px;white-space:nowrap;line-height:1.5}
+
+/* 遮罩区域 */
+.mask-zone{background:var(--red-soft);border:1px solid #e0b8b1;border-radius:10px;padding:13px 14px}
+.mask-zone .field-label{color:var(--red)}
+
+/* ============================================================
+   专项工具
+   ============================================================ */
+.tool-hero{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.strategy{border:1px solid var(--line);border-radius:11px;padding:15px 16px;background:var(--panel);position:relative}
+.strategy.recommend{border-color:var(--green)}
+.strategy .tag{position:absolute;top:13px;right:14px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.strategy.recommend .tag{background:var(--green-soft);color:var(--green-deep)}
+.strategy .tag.alt{background:var(--ochre-soft);color:var(--ochre)}
+.strategy h3{font-size:14px;margin-bottom:8px;padding-right:70px}
+.strategy ol{padding-left:18px;font-size:12.5px;color:var(--ink-2);line-height:1.9}
+.strategy .param{margin-top:10px;font-family:var(--font-mono);font-size:11.5px;background:var(--panel-2);border-radius:8px;padding:8px 11px;color:var(--ink-2)}
+.strategy .param b{color:var(--ochre)}
+
+/* 视角罗盘 */
+.compass-wrap{display:grid;grid-template-columns:240px 1fr;gap:22px;align-items:start}
+.compass{width:230px;height:230px;border-radius:50%;border:1.5px solid var(--line-strong);position:relative;margin:0 auto;background:
+  radial-gradient(circle at center,var(--panel) 0,var(--panel) 62%,var(--panel-2) 63%,var(--panel-2) 100%)}
+.compass .ring-label{position:absolute;font-size:11px;color:var(--ink-3);font-weight:700}
+.compass .needle{position:absolute;top:50%;left:50%;transform-origin:0 0;transition:transform .25s}
+.compass .center-dot{position:absolute;top:50%;left:50%;width:10px;height:10px;background:var(--ochre);border-radius:50%;transform:translate(-50%,-50%);z-index:3}
+.compass .dir-btn{position:absolute;width:30px;height:30px;border-radius:50%;border:1px solid var(--line-strong);background:var(--panel);font-size:11px;color:var(--ink-2);display:flex;align-items:center;justify-content:center;transition:all .13s;z-index:2}
+.compass .dir-btn:hover{border-color:var(--green)}
+.compass .dir-btn.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.view-param-row{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.view-param-row label{width:78px;flex:none;font-size:12.5px;color:var(--ink-2);font-weight:700}
+input[type=range]{flex:1;accent-color:var(--green)}
+.view-param-row .val{font-family:var(--font-mono);font-size:12px;color:var(--green-deep);width:74px;text-align:right;flex:none}
+.azimuth-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.batch-out{font-family:var(--font-mono);font-size:12px;white-space:pre-wrap;line-height:1.8;background:var(--panel-2);border-radius:10px;padding:14px 16px;border:1px solid var(--line);max-height:480px;overflow-y:auto}
+
+/* ============================================================
+   模板库
+   ============================================================ */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:13px}
+.tpl-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px;display:flex;flex-direction:gap;gap:10px;transition:all .15s}
+.tpl-card:hover{border-color:var(--green);box-shadow:var(--shadow)}
+.tpl-card .tpl-ico{width:34px;height:34px;border-radius:9px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;flex:none}
+.tpl-card .tpl-ico svg{width:18px;height:18px;stroke:var(--green);fill:none}
+.tpl-card.mine .tpl-ico{background:var(--ochre-soft)}
+.tpl-card.mine .tpl-ico svg{stroke:var(--ochre)}
+.tpl-card h3{font-size:13.5px;margin-bottom:3px}
+.tpl-card p{font-size:11.5px;color:var(--ink-3);line-height:1.6;flex:1}
+.tpl-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.tpl-tags span{font-size:10.5px;padding:2px 7px;border-radius:5px;background:var(--panel-2);color:var(--ink-2)}
+.tpl-actions{display:flex;gap:7px;margin-top:4px}
+.tpl-section-title{font-size:13px;font-weight:700;color:var(--ink-2);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.tpl-section-title::before{content:"";width:4px;height:14px;background:var(--green);border-radius:2px}
+.tpl-section-title.mine::before{background:var(--ochre)}
+
+/* ============================================================
+   SOP
+   ============================================================ */
+.sop-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.sop-tab{padding:8px 16px;border-radius:9px;border:1px solid var(--line-strong);background:var(--panel);font-size:13px;color:var(--ink-2)}
+.sop-tab.active{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.sop-step{display:flex;gap:15px;margin-bottom:14px}
+.sop-step .step-num{width:26px;height:26px;border-radius:8px;background:var(--green-soft);color:var(--green-deep);font-family:var(--font-mono);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px}
+.sop-step .step-body{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px}
+.sop-step h3{font-size:13.5px;margin-bottom:6px}
+.sop-step ul{padding-left:17px;font-size:12.5px;color:var(--ink-2);line-height:1.9}
+.sop-step .key{background:var(--ochre-soft);color:#8a4a1d;border-radius:6px;padding:1px 6px;font-size:11.5px}
+.sop-step .key.g{background:var(--green-soft);color:var(--green-deep)}
+
+/* ============================================================
+   历史 / 空态 / Toast
+   ============================================================ */
+.hist-item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
+.hist-item .hist-time{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3);width:132px;flex:none;line-height:1.7}
+.hist-item .hist-body{flex:1;min-width:0}
+.hist-item h3{font-size:13px;margin-bottom:3px}
+.hist-item p{font-size:12px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.hist-actions{display:flex;gap:6px;flex:none}
+.empty{text-align:center;padding:48px 20px;color:var(--ink-3);border:1px dashed var(--line-strong);border-radius:12px;background:var(--panel)}
+.empty svg{width:42px;height:42px;stroke:var(--ink-3);fill:none;margin-bottom:12px}
+.empty p{font-size:13px}
+#toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:10px 20px;border-radius:9px;
+  font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:100;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.badge-count{background:var(--ochre);color:#fff;font-size:10.5px;border-radius:20px;padding:1px 7px;font-family:var(--font-mono)}
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width:1080px){
+  .studio-grid{grid-template-columns:1fr}
+  .studio-out{position:static}
+  .tool-hero{grid-template-columns:1fr}
+  .compass-wrap{grid-template-columns:1fr}
+  .flow-cards{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:860px){
+  :root{--side-w:0px}
+  .app{flex-direction:column}
+  .sidebar{
+    width:100%;height:auto;position:static;border-right:none;
+    border-bottom:1px solid var(--line);
+    display:flex;overflow-x:auto;padding:8px;gap:4px;
+  }
+  .nav-item{width:auto;margin-bottom:0;white-space:nowrap;padding:8px 12px}
+  .nav-item svg{display:none}
+  .side-note{display:none}
+  .main{padding:18px 15px 34px}
+  .flow-cards{grid-template-columns:1fr}
+  .plain-result{grid-template-columns:1fr}
+  .ps-step{flex-direction:column;align-items:flex-start}
+  .ps-keys{justify-content:flex-start}
+  .row2,.ref-slots{grid-template-columns:1fr}
+  .brand{min-width:0}
+  .brand-text span{display:none}
+  .topbar{gap:10px;padding:0 13px}
+  .topbar-label{display:none}
+  .hist-item{flex-wrap:wrap}
+  .hist-item .hist-time{width:100%}
+}
+@media (max-width:520px){
+  .seg button{padding:5px 8px;font-size:12px}
+  .azimuth-grid{grid-template-columns:repeat(2,1fr)}
+  .view-head h1{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶栏 ===== -->
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#2E6A4C"/><path d="M7 23 L13 10 L19 17 L25 6" stroke="#E2ECE5" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="6" r="2.5" fill="#BC6429"/></svg>
+    <div class="brand-text"><b>效果图提示词工作台</b><span>RENDER PROMPT STUDIO</span></div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <span class="topbar-label">目标工具</span>
+  <div class="seg compact" id="toolSeg">
+    <button data-tool="banana">Nano Banana</button>
+    <button data-tool="seedream" class="active">Seedream</button>
+    <button data-tool="image">Image</button>
+  </div>
+  <div class="seg compact" id="langSeg">
+    <button data-lang="zh" class="active">中文</button>
+    <button data-lang="en">EN</button>
+  </div>
+</header>
+
+<div class="app">
+  <!-- ===== 侧栏导航 ===== -->
+  <nav class="sidebar">
+    <button class="nav-item active" data-view="studio">
+      <svg viewBox="0 0 24 24" stroke-width="1.8" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+      提示词工作台
+    </button>
+    <button class="nav-item" data-view="tools">
+      <svg viewBox="0 0 24 24" stroke-width="1.8" fill="none"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-2.4z"/></svg>
+      专项工具
+    </button>
+    <button class="nav-item" data-view="templates">
+      <svg viewBox="0 0 24 24" stroke-width="1.8" fill="none"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M15 4v5h5"/></svg>
+      模板库
+    </button>
+    <button class="nav-item" data-view="sop">
+      <svg viewBox="0 0 24 24" stroke-width="1.8" fill="none"><path d="M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1z"/><path d="M5 5h14v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8.5 12l2.2 2.2 4.8-4.8"/></svg>
+      标准作业流程
+    </button>
+    <button class="nav-item" data-view="history">
+      <svg viewBox="0 0 24 24" stroke-width="1.8" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+      历史记录 <span class="badge-count" id="histBadge" style="display:none">0</span>
+    </button>
+    <div class="side-note">
+      <b>使用原则</b>
+      先在左侧选工作流并配置参数，右侧生成提示词后一键复制，粘贴到生图工具，配合 SOP 做前后处理，可显著减少试错额度。
+    </div>
+  </nav>
+
+  <!-- ===== 主内容区 ===== -->
+  <main class="main">
+    <section class="view active" id="view-studio"><div id="mountStudio"></div></section>
+    <section class="view" id="view-tools"><div id="mountTools"></div></section>
+    <section class="view" id="view-templates"><div id="mountTemplates"></div></section>
+    <section class="view" id="view-sop"><div id="mountSop"></div></section>
+    <section class="view" id="view-history"><div id="mountHistory"></div></section>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   脚本将分批写入：词库数据 → 组装引擎 → 视图渲染 → 专项/模板/SOP/历史
+   ============================================================ */
+/* ============================================================
+   一、专业词库（每项含 zh / en，用于提示词组装与中英切换）
+   ============================================================ */
+const DATA = {
+  projectType:[
+    {id:'road',zh:'市政道路 / 街景提升',en:'municipal road and streetscape renovation'},
+    {id:'park',zh:'综合公园 / 社区公园',en:'public or community park'},
+    {id:'waterfront',zh:'滨水河道 / 绿道岸线',en:'riverfront and waterfront greenway'},
+    {id:'plaza',zh:'城市广场',en:'urban plaza'},
+    {id:'residential',zh:'居住区景观',en:'residential landscape'},
+    {id:'commercial',zh:'商业办公外环境',en:'commercial and office outdoor space'},
+    {id:'campus',zh:'校园景观',en:'campus landscape'},
+    {id:'industrial',zh:'厂区 / 产业园区',en:'industrial park'},
+    {id:'pocket',zh:'口袋公园 / 街头绿地',en:'pocket park and roadside green space'},
+    {id:'parking',zh:'停车场 / 交通节点',en:'parking lot and traffic node'},
+    {id:'bridge',zh:'市政桥梁 / 跨河桥',en:'municipal bridge'},
+    {id:'flyover',zh:'高架桥 / 立交桥',en:'flyover and interchange'}
+  ],
+  outputType:[
+    {id:'high-aerial',zh:'高角度鸟瞰（俯角55-75°）',en:'high-angle aerial view, 55-75 degree tilt'},
+    {id:'mid-aerial',zh:'半鸟瞰（俯角30-45°）',en:'semi aerial view, 30-45 degree tilt'},
+    {id:'eye',zh:'人视透视效果图',en:'eye-level perspective rendering'},
+    {id:'master-plan',zh:'正俯视彩色总平面图',en:'top-down colored master plan'},
+    {id:'node',zh:'节点局部效果图',en:'close-up node perspective'},
+    {id:'compare',zh:'现状改造前后对比图',en:'before-and-after renovation comparison'}
+  ],
+  style:[
+    {id:'photo-real',zh:'写实照片级',en:'photorealistic'},
+    {id:'modern',zh:'现代简约',en:'modern minimalist'},
+    {id:'neo-chinese',zh:'新中式',en:'new Chinese style'},
+    {id:'eco',zh:'自然生态风',en:'natural ecological style'},
+    {id:'d5',zh:'D5 / LUMION 实时渲染风',en:'D5 / LUMION real-time rendering style'},
+    {id:'watercolor',zh:'水彩淡彩（彩平）',en:'watercolor style for plan'},
+    {id:'flat',zh:'扁平化材质（彩平）',en:'flat material style for plan'}
+  ],
+  time:[
+    {id:'dawn',zh:'清晨',en:'early dawn'},
+    {id:'morning',zh:'上午',en:'late morning'},
+    {id:'noon',zh:'正午',en:'noon'},
+    {id:'afternoon',zh:'午后',en:'afternoon'},
+    {id:'golden',zh:'黄昏',en:'golden hour'},
+    {id:'dusk',zh:'傍晚蓝调',en:'blue hour at dusk'}
+  ],
+  season:[
+    {id:'spring',zh:'春季（新绿开花）',en:'spring with fresh green and blossoms'},
+    {id:'summer',zh:'夏季（浓荫翠绿）',en:'summer with dense lush green'},
+    {id:'autumn',zh:'秋季（秋色金黄）',en:'autumn with golden fall foliage'},
+    {id:'winter',zh:'冬季（疏枝常绿）',en:'winter with bare branches and evergreens'}
+  ],
+  weather:[
+    {id:'clear',zh:'晴朗',en:'clear sky'},
+    {id:'cloudy',zh:'多云',en:'partly cloudy'},
+    {id:'overcast',zh:'阴天柔光',en:'overcast soft light'},
+    {id:'rain',zh:'雨后湿润',en:'wet surface after rain'}
+  ],
+  plants:[
+    {id:'camphor',zh:'香樟（乔木）',en:'camphor trees'},
+    {id:'plane',zh:'悬铃木 / 法桐',en:'plane trees'},
+    {id:'ginkgo',zh:'银杏',en:'ginkgo trees'},
+    {id:'zelkova',zh:'榉树',en:'zelkova trees'},
+    {id:'osmanthus',zh:'桂花',en:'sweet osmanthus trees'},
+    {id:'celtis',zh:'朴树',en:'celtis trees'},
+    {id:'redwood',zh:'水杉',en:'dawn redwoods'},
+    {id:'cherry',zh:'樱花',en:'cherry blossom trees'},
+    {id:'myrtle',zh:'紫薇',en:'crepe myrtles'},
+    {id:'maple',zh:'红枫',en:'Japanese maples'},
+    {id:'magnolia',zh:'玉兰',en:'magnolia trees'},
+    {id:'willow',zh:'垂柳',en:'weeping willows'},
+    {id:'photinia',zh:'红叶石楠（灌木）',en:'photinia shrubs'},
+    {id:'holly',zh:'冬青',en:'holly hedges'},
+    {id:'pittosporum',zh:'海桐',en:'pittosporum shrubs'},
+    {id:'azalea',zh:'杜鹃',en:'azaleas'},
+    {id:'hydrangea',zh:'绣球',en:'hydrangeas'},
+    {id:'iris',zh:'鸢尾（地被）',en:'iris ground cover'},
+    {id:'mondo',zh:'麦冬',en:'mondo grass'},
+    {id:'lawn',zh:'草坪',en:'neat lawn turf'}
+  ],
+  materials:[
+    {id:'asphalt',zh:'沥青路面',en:'asphalt pavement'},
+    {id:'pervious',zh:'透水混凝土',en:'pervious concrete'},
+    {id:'granite',zh:'花岗岩铺装',en:'granite paving'},
+    {id:'pcbrick',zh:'PC砖',en:'PC bricks'},
+    {id:'cobble',zh:'鹅卵石',en:'cobblestones'},
+    {id:'timber',zh:'木栈道',en:'timber boardwalk'},
+    {id:'wpc',zh:'塑木',en:'WPC decking'},
+    {id:'corten',zh:'耐候钢',en:'corten steel'},
+    {id:'glass',zh:'玻璃幕墙',en:'glass curtain wall'},
+    {id:'faced',zh:'清水混凝土',en:'fair-faced concrete'},
+    {id:'stone',zh:'自然石材',en:'natural stone'},
+    {id:'water',zh:'景观水体',en:'landscape water'},
+    {id:'steel',zh:'钢结构 / 钢箱梁',en:'structural steel / steel box girder'},
+    {id:'boxgirder',zh:'预应力混凝土箱梁',en:'prestressed concrete box girder'},
+    {id:'cable',zh:'拉索 / 吊杆',en:'stay cables / hangers'},
+    {id:'pier',zh:'桥墩 / 桥台',en:'bridge piers and abutments'},
+    {id:'railing',zh:'护栏 / 栏杆',en:'guardrail and railing'},
+    {id:'retaining',zh:'挡土墙 / 边坡支护',en:'retaining wall and slope protection'}
+  ],
+  quality:[
+    {id:'8k',zh:'8K 超高清',en:'8K ultra high definition'},
+    {id:'archviz',zh:'专业建筑可视化',en:'professional architectural visualization'},
+    {id:'gi',zh:'真实全局光照',en:'realistic global illumination'},
+    {id:'shadow',zh:'柔和接触阴影',en:'soft contact shadows'},
+    {id:'texture',zh:'材质质感真实',en:'physically accurate materials'},
+    {id:'dof',zh:'大气透视与景深',en:'atmospheric perspective and depth of field'},
+    {id:'compose',zh:'构图严谨',en:'rigorous composition'},
+    {id:'detail',zh:'细节丰富锐利',en:'rich crisp details'},
+    {id:'scale',zh:'尺度真实',en:'accurate human scale'},
+    {id:'entourage',zh:'配景人物车辆自然',en:'natural people and vehicle entourage'}
+  ],
+  negatives:[
+    {id:'low',zh:'低分辨率、模糊、噪点、压缩伪影',en:'low resolution, blurry, noise, compression artifacts'},
+    {id:'mark',zh:'水印、签名、文字、logo',en:'watermark, signature, text, logo'},
+    {id:'persp',zh:'透视错误、比例失调、结构扭曲',en:'wrong perspective, distorted proportions, warped structure'},
+    {id:'repeat',zh:'重复纹理、塑料质感、假光影',en:'repetitive texture, plastic look, fake lighting'},
+    {id:'cartoon',zh:'卡通渲染、油画感、插画感',en:'cartoon, oil painting, illustration look'},
+    {id:'extra',zh:'多余建筑、擅自增删要素',en:'extra buildings, added or missing elements'},
+    {id:'people',zh:'畸形人物、穿模车辆、悬浮物体',en:'deformed people, clipping cars, floating objects'},
+    {id:'expose',zh:'过曝、死黑、色彩溢出',en:'overexposed, crushed blacks, color fringing'}
+  ],
+  laneNeg:[
+    {id:'lane1',zh:'抽象化、融化、弯曲的道路标线',en:'abstract, melted or curved road markings'},
+    {id:'lane2',zh:'扭曲的导向箭头、模糊斑马线',en:'distorted arrows, blurred zebra crossings'},
+    {id:'lane3',zh:'间距混乱、重复臆造的车道线',en:'messy spacing, duplicated or invented lane lines'}
+  ]
+};
+
+/* 道路标线正向约束（长句，专项模块与工作台共用） */
+const LANE_CLAUSE = {
+  zh:'严格保留并准确还原参考图中的全部道路标线：白色虚线车道分隔线、白色实线边缘线、黄色中心双黄线、人行横道斑马线、停止线、导向箭头与导流线。所有标线必须位置准确、数量不变、笔直等距、边缘锐利，随路面正确透视收束；禁止抽象化、弯曲、融化、模糊、重复或臆造标线。',
+  en:'Strictly preserve and accurately reproduce all road markings from the reference: white dashed lane dividers, solid white edge lines, yellow center double lines, zebra crossings, stop lines, directional arrows and channelizing lines. Every marking must stay in its exact position and count, remain straight, evenly spaced and razor-sharp, and converge with the correct road perspective. No abstract, curved, melted, blurred, duplicated or invented markings.'
+};
+
+/* ============================================================
+   桥型词库（市政桥梁专项）
+   ============================================================ */
+const BRIDGE_TYPES = [
+  {id:'beam',zh:'预制梁 / 连续梁桥',en:'precast / continuous beam bridge'},
+  {id:'arch',zh:'拱桥（下承式 / 中承式）',en:'arch bridge (through / half-through)'},
+  {id:'cable-stayed',zh:'斜拉桥',en:'cable-stayed bridge'},
+  {id:'suspension',zh:'悬索桥',en:'suspension bridge'},
+  {id:'rigid',zh:'刚构桥',en:'rigid-frame bridge'},
+  {id:'truss',zh:'钢桁架桥',en:'steel truss bridge'},
+  {id:'pedestrian',zh:'人行天桥',en:'pedestrian overpass'},
+  {id:'landscape',zh:'景观步行桥',en:'landscape pedestrian bridge'}
+];
+
+/* ============================================================
+   道路横断面要素词库（CAD 横断面出图专项，可多选）
+   ============================================================ */
+const CROSS_ELEMENTS = [
+  {id:'motor',zh:'机动车道',en:'motor vehicle lanes'},
+  {id:'nonmotor',zh:'非机动车道',en:'non-motor vehicle lanes'},
+  {id:'sidewalk',zh:'人行道',en:'sidewalks'},
+  {id:'median',zh:'中央分隔带',en:'central median'},
+  {id:'sidebelt',zh:'侧分带 / 机非隔离带',en:'side separator / green belt'},
+  {id:'curb',zh:'路缘石',en:'curbs'},
+  {id:'slope',zh:'路基边坡',en:'roadbed slopes'},
+  {id:'ditch',zh:'边沟 / 排水沟',en:'side ditches / drainage'},
+  {id:'guard',zh:'防撞护栏',en:'anti-collision guardrails'},
+  {id:'lamp',zh:'路灯 / 智慧灯杆',en:'street lamps / smart poles'},
+  {id:'wall',zh:'挡土墙',en:'retaining walls'},
+  {id:'pipe',zh:'综合管线（地下）',en:'underground utility ducts'},
+  {id:'tree',zh:'行道树',en:'street trees'},
+  {id:'hedge',zh:'绿篱地被',en:'hedges and ground cover'}
+];
+/* 横断面出图模式（单选） */
+const CROSS_MODES = [
+  {id:'section',zh:'写实剖面（正截面，材质写实）',en:'realistic section (orthographic cut)'},
+  {id:'perspective',zh:'透视横断面（沿道路纵深延伸的半透视街景）',en:'perspective section (extruded street view)'}
+];
+
+/* ============================================================
+   3-6 号通用参考图角色（各工作流通用，接在工作流前两个角色之后）
+   ============================================================ */
+const EXTRA_REF_ROLES = [
+  {num:3,zh:'风格 / 氛围意向图：仅参考整体色调、光影与画面氛围，不改变图1结构',en:'style / mood reference: tone, light and atmosphere only'},
+  {num:4,zh:'植物 / 苗木参考：植物品种、规格与配置方式',en:'planting reference: species, size and arrangement'},
+  {num:5,zh:'材质 / 节点细节参考：铺装、立面与构造细节',en:'material / detail reference: paving, facade and construction'},
+  {num:6,zh:'其他意向 / 配景参考：人物、车辆与环境配景',en:'other entourage: people, vehicles and context'}
+];
+
+/* ============================================================
+   二、三大工作流：任务指令、参考图角色、遮罩指令（中/英）
+   ============================================================ */
+const WORKFLOWS = {
+  photo:{
+    name:'图改图',
+    cardDesc:'现场照片 / 航拍 / 卫星图，划定区域局部修改，未改区域保持不变',
+    refs:[
+      {num:1,zh:'现状照片或航拍底图：保持相机机位、视角、透视、构图与比例，未改区域严格不变',en:'current photo / aerial base: keep camera, perspective and composition; unchanged areas stay fixed'},
+      {num:2,zh:'风格或材质参考（可选）：仅借鉴材质、色彩与氛围，不改变图1的结构',en:'optional style / material reference: borrow materials and mood only, never the structure of image 1'}
+    ],
+    instruction:{
+      zh:'基于参考图1的现状照片进行图像编辑改造。保持原图的相机机位、视角、透视关系、构图与画面比例完全一致；仅对指定区域进行修改，指定区域之外的建筑、道路、植被、地形与环境严格保持原样。改造部分须与周边环境在光影、色调、材质和尺度上自然衔接，无拼接痕迹，整体仍为一张真实照片。',
+      en:'Edit the existing photo in reference image 1. Keep the exact same camera position, viewing angle, perspective, composition and aspect ratio; modify only the designated area, while every building, road, plant, terrain and surrounding outside that area remains strictly unchanged. The edited part must blend naturally with the surroundings in lighting, tone, material and scale with no visible seam, so the final image still reads as one real photograph.'
+    },
+    mask:{
+      zh:'仅修改遮罩（标注）区域内的内容，将该区域改造为：{target}；遮罩外的所有像素严格保持不变，不允许连带改动。',
+      en:'Change only the content inside the masked (highlighted) area and redesign it as: {target}; keep every pixel outside the mask strictly unchanged with no collateral edits.'
+    }
+  },
+  cad:{
+    name:'CAD 线稿出彩平',
+    cardDesc:'CAD 导出 PDF 并简单铺底色，生成投标级正俯视彩色总平面图',
+    refs:[
+      {num:1,zh:'CAD 线稿：作为精确边界依据，严格遵循路网、建筑、水体、绿地的轮廓与位置，不增删移动',en:'CAD line drawing: exact boundary; follow every outline and position, no adding or moving'},
+      {num:2,zh:'分区底色图：界定功能分区与基底色彩',en:'zoning base-color image: defines functional zones and base colors'}
+    ],
+    instruction:{
+      zh:'以参考图1的CAD线稿为精确边界依据，生成一张正俯视（顶视）彩色总平面图。严格遵循线稿中所有道路、建筑、水体、绿地与铺装的轮廓、位置和比例，不得增删、移动或变形任何要素。按参考图2的分区底色进行材质与色彩填充：材质采用平面化顶视表达，乔木、灌木与地被使用统一的顶视图例，投影方向一致、柔和干净。整体配色协调、边界清晰、图面整洁，达到投标方案彩色总平面图的专业制图水准，画面中不出现任何文字标注。',
+      en:'Using the CAD line drawing in reference image 1 as the exact boundary, produce a top-down colored master plan. Strictly follow the outlines, positions and proportions of every road, building, water body, green space and paving; do not add, remove, move or deform any element. Fill materials and colors according to the zoning base colors in reference image 2: use flat top-view materials, consistent top-view symbols for trees, shrubs and ground cover, and uniform soft shadows. Keep the palette harmonious, edges crisp and the sheet clean at professional bidding-plan standard, with no text labels in the image.'
+    },
+    mask:null
+  },
+  su:{
+    name:'SU 视角出效果图',
+    cardDesc:'SketchUp 导出对应视角图片，渲染为投标级写实效果图',
+    refs:[
+      {num:1,zh:'SU 导出图：作为透视与空间结构基准，锁定相机机位、体块形体与比例',en:'SketchUp export: perspective and spatial base; lock camera, massing and proportions'},
+      {num:2,zh:'材质 / 氛围参考（可选）：仅借鉴材质、光影与氛围',en:'optional material / mood reference: materials, light and atmosphere only'}
+    ],
+    instruction:{
+      zh:'以参考图1的SketchUp导出图为透视与空间结构基准，渲染为投标级写实效果图。严格保持参考图的相机机位、视角、透视关系，以及建筑与场地体块的形体、比例和位置不变；在此基础上替换为真实材质，补充植被、人物、车辆等配景与环境氛围，赋予真实光影。画面尺度真实、材质可信、光影自然，达到专业建筑可视化公司的出图水准。',
+      en:'Using the SketchUp export in reference image 1 as the perspective and spatial base, render a bidding-grade photoreal image. Keep the exact camera position, angle and perspective, as well as the form, proportions and placement of all building and site masses; then replace them with realistic materials, add vegetation, people, vehicles and ambient context, and apply natural lighting. The result must show true scale, believable materials and natural light at the standard of a professional architectural visualization studio.'
+    },
+    mask:null
+  },
+  cross:{
+    name:'CAD 横断面出效果图',
+    cardDesc:'道路标准横断面线稿（可先简单上色），生成写实剖面或透视横断面效果图',
+    refs:[
+      {num:1,zh:'CAD 横断面线稿：作为精确依据，严格遵循各功能带宽度、竖向高差、坡率与结构层，不增删要素',en:'CAD cross-section line drawing: exact basis; follow widths, levels, slopes and layers'},
+      {num:2,zh:'分区上色 / 材质参考（可选）：界定各功能带色彩与材质',en:'optional color / material reference: zone colors and materials'}
+    ],
+    instruction:{
+      zh:'以参考图1的道路标准横断面CAD线稿为精确依据，生成一张写实的道路横断面效果图。严格遵循线稿中各功能带（机动车道、非机动车道、人行道、分隔带、边坡、排水与挡墙等）的宽度、位置、竖向高差与坡率，不得增删、移动或改变任何比例与结构。在此基础上替换为真实材质：路面、结构层与土层分层表达清晰，植物、路灯、护栏及车辆、人物采用真实尺度配景，光影自然、材质可信。画面达到投标文本中专业横断面效果图的表达水准，图内不出现任何文字标注。',
+      en:'Using the road cross-section CAD line drawing in reference image 1 as the exact basis, produce a realistic road cross-section rendering. Strictly follow the widths, positions, vertical levels and slopes of every functional band (traffic lanes, cycle tracks, sidewalks, medians, slopes, drainage and retaining walls); do not add, remove, move or rescale any structure. Replace them with realistic materials, clearly showing pavement, structural layers and soil strata, with true-scale plants, lamps, guardrails, vehicles and people under natural light and believable materials. Meet the standard of a professional cross-section rendering in bidding documents, with no text labels in the image.'
+    },
+    mask:null
+  }
+};
+
+/* 工具特性与使用建议 */
+const TOOL_NOTES = {
+  banana:{zh:'多图融合与指令遵循能力强，适合复杂图改与多参考协同；用自然语言陈述编辑要求，区域修改务必写清“仅改哪里、其余保持不变”。',en:'Strong multi-image fusion and instruction following for complex edits. State in natural language exactly what changes and that everything else stays fixed.'},
+  seedream:{zh:'中文理解与本土景观场景表现稳定，建议结构化分点描述，参数与约束写具体，配合负向词出图。',en:'Stable Chinese understanding and local landscape scenes. Use structured point-by-point prompts with concrete constraints and negatives.'},
+  image:{zh:'写实渲染与风格化表现好，建议配全负向词，并明确多张参考图的主从关系。',en:'Good at realism and stylization. Include full negatives and clarify which reference is primary.'}
+};
+
+/* ============================================================
+   白话命令关键词规则（按数组顺序优先匹配，具体词放前面）
+   ============================================================ */
+const PLAIN_RULES = {
+  workflow:[
+    {kw:['横断面','横截面','截面','剖面'],v:'cross'},
+    {kw:['彩平','彩色总平','总平面图','平面图'],v:'cad'},
+    {kw:['现状','现场','航拍','卫星','改造','修改','照片'],v:'photo'},
+    {kw:['su','sketchup','模型','渲染','效果图'],v:'su'}
+  ],
+  project:[
+    {kw:['高架','立交'],v:'flyover'},
+    {kw:['天桥','斜拉','拱桥','悬索','桁架','刚构','桥梁','跨河桥','大桥','桥'],v:'bridge'},
+    {kw:['口袋公园'],v:'pocket'},
+    {kw:['公园','绿地','游园'],v:'park'},
+    {kw:['滨水','河道','河岸','绿道','湖','岸线'],v:'waterfront'},
+    {kw:['广场'],v:'plaza'},
+    {kw:['居住区','小区','住宅'],v:'residential'},
+    {kw:['商业','办公'],v:'commercial'},
+    {kw:['校园','学校'],v:'campus'},
+    {kw:['厂区','产业园','工业园区'],v:'industrial'},
+    {kw:['停车场'],v:'parking'},
+    {kw:['道路','街景','马路','街道','路'],v:'road'}
+  ],
+  output:[
+    {kw:['半鸟瞰'],v:'mid-aerial'},
+    {kw:['鸟瞰','俯视'],v:'high-aerial'},
+    {kw:['人视','站在人'],v:'eye'},
+    {kw:['正俯视'],v:'master-plan'},
+    {kw:['节点','局部','特写'],v:'node'},
+    {kw:['前后对比','对比图'],v:'compare'}
+  ],
+  style:[
+    {kw:['新中式','中式'],v:'neo-chinese'},
+    {kw:['水彩','淡彩'],v:'watercolor'},
+    {kw:['扁平'],v:'flat'},
+    {kw:['d5','lumion','实时渲染'],v:'d5'},
+    {kw:['现代简约','简约'],v:'modern'},
+    {kw:['生态','自然风'],v:'eco'},
+    {kw:['写实','照片级','真实'],v:'photo-real'}
+  ],
+  time:[
+    {kw:['清晨'],v:'dawn'},
+    {kw:['上午'],v:'morning'},
+    {kw:['正午','中午'],v:'noon'},
+    {kw:['午后','下午'],v:'afternoon'},
+    {kw:['黄昏','夕阳','日落'],v:'golden'},
+    {kw:['傍晚','夜景','夜晚','蓝调'],v:'dusk'}
+  ],
+  season:[
+    {kw:['春天','春季'],v:'spring'},
+    {kw:['夏天','夏季'],v:'summer'},
+    {kw:['秋天','秋季'],v:'autumn'},
+    {kw:['冬天','冬季'],v:'winter'}
+  ],
+  weather:[
+    {kw:['雨后','湿润'],v:'rain'},
+    {kw:['多云'],v:'cloudy'},
+    {kw:['阴天'],v:'overcast'},
+    {kw:['晴天','晴朗'],v:'clear'}
+  ],
+  bridgeType:[
+    {kw:['斜拉'],v:'cable-stayed'},
+    {kw:['拱桥'],v:'arch'},
+    {kw:['悬索'],v:'suspension'},
+    {kw:['刚构'],v:'rigid'},
+    {kw:['桁架'],v:'truss'},
+    {kw:['天桥'],v:'pedestrian'},
+    {kw:['景观桥','步行桥'],v:'landscape'},
+    {kw:['梁桥','连续梁'],v:'beam'}
+  ],
+  crossMode:[
+    {kw:['透视'],v:'perspective'},
+    {kw:['剖面'],v:'section'}
+  ],
+  plants:[
+    {kw:['香樟'],v:'camphor'},
+    {kw:['法桐','悬铃木'],v:'plane'},
+    {kw:['银杏'],v:'ginkgo'},
+    {kw:['榉树'],v:'zelkova'},
+    {kw:['桂花'],v:'osmanthus'},
+    {kw:['朴树'],v:'celtis'},
+    {kw:['水杉'],v:'redwood'},
+    {kw:['樱花'],v:'cherry'},
+    {kw:['紫薇'],v:'myrtle'},
+    {kw:['红枫'],v:'maple'},
+    {kw:['玉兰'],v:'magnolia'},
+    {kw:['垂柳','柳树'],v:'willow'},
+    {kw:['红叶石楠','石楠'],v:'photinia'},
+    {kw:['冬青'],v:'holly'},
+    {kw:['海桐'],v:'pittosporum'},
+    {kw:['杜鹃'],v:'azalea'},
+    {kw:['绣球'],v:'hydrangea'},
+    {kw:['鸢尾'],v:'iris'},
+    {kw:['麦冬'],v:'mondo'},
+    {kw:['草坪','草皮'],v:'lawn'}
+  ],
+  materials:[
+    {kw:['沥青'],v:'asphalt'},
+    {kw:['透水混凝土','透水'],v:'pervious'},
+    {kw:['花岗岩'],v:'granite'},
+    {kw:['pc砖','pc'],v:'pcbrick'},
+    {kw:['鹅卵石'],v:'cobble'},
+    {kw:['木栈道','木结构'],v:'timber'},
+    {kw:['塑木'],v:'wpc'},
+    {kw:['耐候钢'],v:'corten'},
+    {kw:['玻璃'],v:'glass'},
+    {kw:['清水混凝土'],v:'faced'},
+    {kw:['石材','自然石'],v:'stone'},
+    {kw:['钢结构','钢箱梁'],v:'steel'},
+    {kw:['混凝土箱梁','箱梁'],v:'boxgirder'},
+    {kw:['拉索','吊杆'],v:'cable'},
+    {kw:['桥墩','桥台'],v:'pier'},
+    {kw:['护栏','栏杆'],v:'railing'},
+    {kw:['挡墙','挡土墙','边坡支护'],v:'retaining'}
+  ],
+  laneKw:['标线','车道线','斑马线','箭头','双黄线','停止线']
+};
+
+/* ============================================================
+   三、视角常量（多视角鸟瞰专项使用）
+   ============================================================ */
+const DIRS = [
+  {id:'N',zh:'正北',en:'north',deg:0},
+  {id:'NE',zh:'东北',en:'northeast',deg:45},
+  {id:'E',zh:'正东',en:'east',deg:90},
+  {id:'SE',zh:'东南',en:'southeast',deg:135},
+  {id:'S',zh:'正南',en:'south',deg:180},
+  {id:'SW',zh:'西南',en:'southwest',deg:225},
+  {id:'W',zh:'正西',en:'west',deg:270},
+  {id:'NW',zh:'西北',en:'northwest',deg:315}
+];
+const TILTS = [
+  {id:'plan',zh:'正俯视 90°',en:'top-down 90°',v:90},
+  {id:'high',zh:'高角度鸟瞰 60-75°',en:'high aerial 65°',v:65},
+  {id:'semi',zh:'半鸟瞰 35-45°',en:'semi aerial 40°',v:40},
+  {id:'eye',zh:'人视 15-20°',en:'eye level 18°',v:18}
+];
+const HEIGHTS = [
+  {id:'low',zh:'低空 60m',en:'60m',h:60},
+  {id:'mid',zh:'中空 120m',en:'120m',h:120},
+  {id:'high',zh:'高空 200m',en:'200m',h:200},
+  {id:'vh',zh:'超高 350m',en:'350m',h:350}
+];
+
+/* ============================================================
+   四、全局状态与本地存储
+   ============================================================ */
+const STORE_KEY = 'render_prompt_studio_v1';
+let state = {
+  workflow:'photo', tool:'seedream', lang:'zh', refCount:1,
+  project:'', output:'', style:'', time:'', season:'', weather:'',
+  plants:[], materials:[], quality:[],
+  negatives:DATA.negatives.map(n=>n.id),
+  lane:false, laneNeg:true, maskTarget:'', custom:'',
+  bridgeType:'', crossMode:'section', crossElements:[]
+};
+let outTab = 'struct';   // struct | clean | neg | full
+let plainResult = null;  // 白话解析结果
+let plainText = '';      // 白话输入文本
+let store = {myTemplates:[], history:[]};
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ const s = JSON.parse(raw); store.myTemplates = s.myTemplates||[]; store.history = s.history||[]; }
+  }catch(e){}
+}
+function saveStore(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){}
+}
+
+/* ============================================================
+   五、通用工具
+   ============================================================ */
+function $(s,root){return (root||document).querySelector(s);}
+function $all(s,root){return Array.prototype.slice.call((root||document).querySelectorAll(s));}
+function T(item){ return state.lang==='zh' ? item.zh : item.en; }
+function findById(arr,id){ return arr.find(function(x){return x.id===id;}); }
+function toast(msg){
+  const box = $('#toast'); box.textContent = msg; box.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(function(){box.classList.remove('show');},1900);
+}
+function copyText(text, okMsg){
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try{ ok = document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    if(ok) toast(okMsg||'已复制到剪贴板'); else toast('复制失败，请手动选择文本');
+  }
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(function(){toast(okMsg||'已复制到剪贴板');}, fallback);
+  }else{ fallback(); }
+}
+
+/* ============================================================
+   六、提示词组装引擎
+   ============================================================ */
+function L(zh,en){ return state.lang==='zh' ? zh : en; }
+
+function buildSections(){
+  const wf = WORKFLOWS[state.workflow];
+  const secs = [];
+  const comma = L('，',', ');
+  /* 1 任务指令 */
+  secs.push({label:L('任务指令','TASK BRIEF'), text:wf.instruction[state.lang]});
+  /* 2 参考图使用（工作流前两个角色 + 通用 3-6 角色） */
+  const allRefs = wf.refs.concat(EXTRA_REF_ROLES);
+  const refs = allRefs.slice(0, state.refCount);
+  const refText = refs.map(function(r){
+    return L('图','Image ') + r.num + L('：',': ') + T(r);
+  }).join('\n');
+  secs.push({label:L('参考图使用','REFERENCE IMAGES'), text:refText});
+  /* 3 遮罩区域（仅图改图） */
+  if(state.workflow==='photo' && state.maskTarget.trim()){
+    secs.push({label:L('遮罩区域指令','MASK INSTRUCTION'),
+      text:wf.mask[state.lang].replace('{target}', state.maskTarget.trim())});
+  }
+  /* 4 项目与出图类型 */
+  const po = [];
+  if(state.project) po.push(T(findById(DATA.projectType,state.project)));
+  if(state.output && state.workflow!=='cross') po.push(T(findById(DATA.outputType,state.output)));
+  if(po.length) secs.push({label:L('项目与出图类型','SUBJECT & OUTPUT'), text:po.join(comma)});
+  /* 4.5 桥型（桥梁 / 高架项目时） */
+  if(state.bridgeType && (state.project==='bridge'||state.project==='flyover')){
+    secs.push({label:L('桥型结构','BRIDGE TYPE'), text:T(findById(BRIDGE_TYPES,state.bridgeType))});
+  }
+  /* 4.6 横断面出图模式与要素（仅横断面工作流） */
+  if(state.workflow==='cross'){
+    if(state.crossMode) secs.push({label:L('出图模式','SECTION MODE'), text:T(findById(CROSS_MODES,state.crossMode))});
+    const ce = state.crossElements.map(function(id){return T(findById(CROSS_ELEMENTS,id));});
+    if(ce.length) secs.push({label:L('横断面要素','SECTION ELEMENTS'), text:ce.join(comma)});
+  }
+  /* 5 风格 */
+  if(state.style) secs.push({label:L('视觉风格','STYLE'), text:T(findById(DATA.style,state.style))});
+  /* 6 时段 / 季相 / 天气光影 */
+  const env = [];
+  if(state.time) env.push(T(findById(DATA.time,state.time)));
+  if(state.season) env.push(T(findById(DATA.season,state.season)));
+  if(state.weather) env.push(T(findById(DATA.weather,state.weather)));
+  if(env.length) secs.push({label:L('时段与光影','TIME & LIGHT'), text:env.join(comma)});
+  /* 7 植物配置 */
+  const pl = state.plants.map(function(id){return T(findById(DATA.plants,id));});
+  if(pl.length) secs.push({label:L('植物配置','PLANTING'), text:pl.join(comma)});
+  /* 8 材质 */
+  const ma = state.materials.map(function(id){return T(findById(DATA.materials,id));});
+  if(ma.length) secs.push({label:L('主要材质','MATERIALS'), text:ma.join(comma)});
+  /* 9 道路标线专项约束（横断面工作流不适用） */
+  if(state.lane && state.workflow!=='cross') secs.push({label:L('道路标线约束','ROAD MARKING CONTROL'), text:LANE_CLAUSE[state.lang]});
+  /* 10 画面质量 */
+  const qu = state.quality.map(function(id){return T(findById(DATA.quality,id));});
+  if(qu.length) secs.push({label:L('画面质量','QUALITY'), text:qu.join(comma)});
+  /* 11 自定义补充 */
+  if(state.custom.trim()) secs.push({label:L('补充要求','EXTRA'), text:state.custom.trim()});
+  return secs;
+}
+
+function buildNegText(){
+  const neg = state.negatives.map(function(id){return T(findById(DATA.negatives,id));});
+  if(state.lane && state.laneNeg){
+    DATA.laneNeg.forEach(function(n){neg.push(T(n));});
+  }
+  return neg.join(L('，',', '));
+}
+
+/* 三种输出文本 */
+function getStructText(){
+  return buildSections().map(function(s){return '【'+s.label+'】\n'+s.text;}).join('\n\n');
+}
+function getCleanText(){
+  return buildSections().map(function(s){return s.text;}).join(L('\n\n','. '));
+}
+/* 视角与镜头要求（融入专项工具视角） */
+function buildViewRequirement(){
+  if(state.workflow==='cross'){
+    const m = findById(CROSS_MODES,state.crossMode);
+    return state.lang==='zh' ? '横断面模式：'+m.zh : 'Section mode: '+m.en;
+  }
+  const map = {
+    'high-aerial':{zh:'高角度鸟瞰，相机俯角约 55–75°，保持场地各要素比例与透视准确，画面稳定无倾斜',en:'High-angle aerial, camera tilt about 55-75°, accurate proportions and perspective'},
+    'mid-aerial':{zh:'半鸟瞰视角，相机俯角约 30–45°，兼顾场地平面关系与竖向空间层次',en:'Half-aerial, camera tilt about 30-45°, balancing plan and vertical space'},
+    'eye':{zh:'人视高度（约 1.5–1.7m），两点透视，水平线位于画面下三分之一，近大远小自然',en:'Eye-level (about 1.5-1.7m), two-point perspective, natural scale'},
+    'master-plan':{zh:'正俯视（相机俯角约 90°），垂直向下、无透视变形，各分区比例精确',en:'Top-down plan (about 90° tilt), no perspective distortion, accurate areas'},
+    'node':{zh:'节点近景，聚焦局部构造与材质细节，浅景深突出主体',en:'Close-up node, focus on construction and material detail, shallow depth of field'},
+    'compare':{zh:'同一机位前后对比构图，视角、焦距与画面范围完全一致',en:'Before/after comparison, identical camera, focal length and framing'}
+  };
+  if(state.output && map[state.output]) return map[state.output][state.lang];
+  return '';
+}
+/* 完整提示词方案：正向 + 视角 + 负向 */
+function buildFullPlan(){
+  const zh = state.lang==='zh';
+  const vr = buildViewRequirement();
+  if(zh){
+    let out = '【一、正向生成指令】\n'+getCleanText();
+    if(vr) out += '\n\n【二、视角与镜头要求】\n'+vr;
+    out += '\n\n【三、负向提示词】\n'+buildNegText();
+    return out;
+  }
+  let out = '[1] POSITIVE PROMPT\n'+getCleanText();
+  if(vr) out += '\n\n[2] CAMERA & VIEW REQUIREMENT\n'+vr;
+  out += '\n\n[3] NEGATIVE PROMPT\n'+buildNegText();
+  return out;
+}
+function currentOutput(){
+  if(outTab==='struct') return getStructText();
+  if(outTab==='clean') return getCleanText();
+  if(outTab==='full') return buildFullPlan();
+  return buildNegText();
+}
+
+/* ============================================================
+   六之补 · 白话命令解析（纯前端关键词规则，无网络依赖）
+   ============================================================ */
+function matchRule(text, rules){
+  for(let i=0;i<rules.length;i++){
+    for(let j=0;j<rules[i].kw.length;j++){
+      if(text.indexOf(rules[i].kw[j])>=0) return {v:rules[i].v,hit:rules[i].kw[j]};
+    }
+  }
+  return null;
+}
+function matchMulti(text, rules){
+  const out=[];
+  rules.forEach(function(r){
+    r.kw.forEach(function(k){
+      if(text.indexOf(k)>=0 && out.findIndex(function(o){return o.v===r.v;})<0) out.push({v:r.v,hit:k});
+    });
+  });
+  return out;
+}
+function parsePlainCommand(raw){
+  const text = String(raw||'').toLowerCase();
+  const res = {hits:[], fields:{}, multi:{plants:[],materials:[]}, lane:false};
+  function single(name, rules){
+    const m = matchRule(text,rules);
+    if(m){ res.fields[name]=m.v; res.hits.push(m.hit); }
+  }
+  single('workflow',PLAIN_RULES.workflow);
+  if(!res.fields.workflow) res.fields.workflow='su';
+  single('project',PLAIN_RULES.project);
+  single('output',PLAIN_RULES.output);
+  single('style',PLAIN_RULES.style);
+  single('time',PLAIN_RULES.time);
+  single('season',PLAIN_RULES.season);
+  single('weather',PLAIN_RULES.weather);
+  single('bridgeType',PLAIN_RULES.bridgeType);
+  single('crossMode',PLAIN_RULES.crossMode);
+  res.multi.plants = matchMulti(text,PLAIN_RULES.plants).map(function(x){return x.v;});
+  res.multi.materials = matchMulti(text,PLAIN_RULES.materials).map(function(x){return x.v;});
+  res.lane = PLAIN_RULES.laneKw.some(function(k){return text.indexOf(k)>=0;});
+  if(res.lane) res.hits.push('标线');
+  let n = Object.keys(res.fields).length + res.multi.plants.length + res.multi.materials.length + (res.lane?1:0);
+  res.confidence = n>=5?'high':(n>=3?'mid':'low');
+  return res;
+}
+function applyParse(res){
+  Object.keys(res.fields).forEach(function(k){ state[k]=res.fields[k]; });
+  state.plants = res.multi.plants.slice();
+  state.materials = res.multi.materials.slice();
+  if(res.lane){ state.lane=true; state.laneNeg=true; }
+  if(state.workflow==='cross' && !state.crossMode) state.crossMode='section';
+  if(!state.project) state.project='road';
+}
+function buildRemark(res){
+  const zh = state.lang==='zh';
+  const summary=[], advice=[];
+  if(zh){
+    summary.push('工作流：'+WORKFLOWS[res.fields.workflow].name);
+    if(res.fields.project) summary.push('项目类型：'+findById(DATA.projectType,res.fields.project).zh);
+    if(res.fields.output) summary.push('出图视角：'+findById(DATA.outputType,res.fields.output).zh);
+    if(res.fields.style) summary.push('视觉风格：'+findById(DATA.style,res.fields.style).zh);
+    if(res.fields.time) summary.push('时段：'+findById(DATA.time,res.fields.time).zh);
+    if(res.fields.season) summary.push('季节：'+findById(DATA.season,res.fields.season).zh);
+    if(res.fields.weather) summary.push('天气：'+findById(DATA.weather,res.fields.weather).zh);
+    if(res.fields.bridgeType) summary.push('桥型：'+findById(BRIDGE_TYPES,res.fields.bridgeType).zh);
+    if(res.multi.plants.length) summary.push('植物：'+res.multi.plants.map(function(id){return findById(DATA.plants,id).zh;}).join('、'));
+    if(res.multi.materials.length) summary.push('材质：'+res.multi.materials.map(function(id){return findById(DATA.materials,id).zh;}).join('、'));
+    if(res.lane) summary.push('已启用道路标线保真');
+    if(!res.fields.style) advice.push('未指定风格，默认写实照片级，投标场景最通用');
+    if(!res.fields.time) advice.push('未指定光线，推荐上午柔光，光影稳定、便于后期');
+    if(!res.fields.season) advice.push('未指定季节，默认夏季（植被最饱满）');
+    if(res.lane||res.fields.project==='road'||res.fields.project==='bridge'||res.fields.project==='flyover')
+      advice.push('道路/桥梁项目已开启标线约束，避免标线被抽象化，必要时用 PS 分层贴回');
+    if(res.fields.workflow==='cross') advice.push('横断面图内不生成文字，尺寸标注与图例另行在 PS/CAD 添加');
+    if(res.confidence==='low') advice.push('白话命中信息较少，已按通用默认补全，建议手动核对下方参数');
+    return {summary:summary,advice:advice,conf:res.confidence};
+  }
+  summary.push('Workflow: '+WORKFLOWS[res.fields.workflow].nameEn);
+  if(res.fields.project) summary.push('Project: '+findById(DATA.projectType,res.fields.project).en);
+  if(res.fields.output) summary.push('View: '+findById(DATA.outputType,res.fields.output).en);
+  if(res.fields.style) summary.push('Style: '+findById(DATA.style,res.fields.style).en);
+  if(res.fields.time) summary.push('Time: '+findById(DATA.time,res.fields.time).en);
+  if(res.multi.plants.length) summary.push('Plants: '+res.multi.plants.map(function(id){return findById(DATA.plants,id).en;}).join(', '));
+  if(res.multi.materials.length) summary.push('Materials: '+res.multi.materials.map(function(id){return findById(DATA.materials,id).en;}).join(', '));
+  if(res.lane) summary.push('Road marking control enabled');
+  if(!res.fields.style) advice.push('No style given, defaulting to photorealistic');
+  if(!res.fields.time) advice.push('No time given, recommending soft morning light');
+  if(res.confidence==='low') advice.push('Few keywords matched; defaults applied, please review the parameters below');
+  return {summary:summary,advice:advice,conf:res.confidence};
+}
+/* 纵向 SOP 流程图：节点 + 连接箭头 */
+function renderFlowChart(workflow){
+  const steps = SOP_DATA[workflow].steps;
+  return '<div class="flow-chart">'+steps.map(function(s,i){
+    const t = s.title.replace(/^第.步 · /,'');
+    return '<div class="fc-node"><span class="fc-dot">'+(i+1)+'</span><span class="fc-t">'+t+'</span></div>'+
+      (i<steps.length-1?'<div class="fc-link"></div>':'');
+  }).join('')+'</div>';
+}
+
+/* ============================================================
+   七、工作台视图渲染
+   ============================================================ */
+function chipGroup(arr, selected, multi, variant){
+  return '<div class="chips">' + arr.map(function(item){
+    const on = multi ? selected.indexOf(item.id)>=0 : selected===item.id;
+    return '<button type="button" class="chip '+(variant||'')+(on?' on':'')+'" data-id="'+item.id+'">'+T(item)+'</button>';
+  }).join('') + '</div>';
+}
+
+function renderStudio(){
+  const wf = WORKFLOWS[state.workflow];
+  const html =
+  '<div class="view-head"><h1>'+L('提示词工作台','Prompt Studio')+'</h1>'+
+    '<p>'+L('选择工作流并配置参数，右侧自动生成标准化提示词，一键复制后粘贴到生图工具；配合「标准作业流程」做前后处理。','Pick a workflow, set the parameters, then copy the standardized prompt into your image tool.')+'</p></div>'+
+
+  /* 白话命令区 */
+  '<div class="plain-card">'+
+    '<div class="plain-head">'+
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2E6A4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.6z"/></svg>'+
+      L('白话命令（自动转模板提示词）','Plain Command')+'</div>'+
+    '<div class="plain-sub">'+L('用大白话描述要做的图，自动识别工作流与参数，生成提示词、备注方案与 SOP 流程图。','Describe in plain words; it auto-detects the workflow and parameters.')+'</div>'+
+    '<textarea class="plain-textarea" id="plainInput" placeholder="'+L('例如：用现场航拍图做一条城市道路的鸟瞰效果图，写实风格，上午光线，车道标线要清楚','e.g. Make a realistic aerial rendering of an urban road from a drone photo, morning light, keep lane markings clear')+'">'+plainText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea>'+
+    '<div class="plain-actions">'+
+      '<button class="btn btn-primary" id="plainParse" type="button">'+L('解析并生成方案','Parse & build')+'</button>'+
+      '<button class="btn btn-ghost" id="plainClear" type="button">'+L('清空','Clear')+'</button></div>'+
+    '<div class="plain-examples">'+
+      [L('用现场航拍图做城市道路鸟瞰，写实，上午，标线清楚','Road aerial from drone, realistic, morning, clear markings'),
+       L('CAD道路横断面线稿生成写实剖面，含结构层和土层','CAD section to realistic cut with structure and soil layers'),
+       L('基于SU模型做跨河斜拉桥黄昏夜景半鸟瞰','SU cable-stayed bridge dusk half-aerial'),
+       L('CAD线稿上色后生成公园彩平，正俯视','CAD linework to park color master plan, top view')
+      ].map(function(x,i){return '<button class="plain-ex" type="button" data-ex="'+i+'">'+x+'</button>';}).join('')+
+    '</div>'+
+    (plainResult ? (function(){
+      const rk = buildRemark(plainResult);
+      const confText = {high:L('置信度 · 高','Confidence · High'),mid:L('置信度 · 中','Confidence · Medium'),low:L('置信度 · 低','Confidence · Low')}[rk.conf];
+      return '<div class="plain-result">'+
+        '<div class="remark-box"><div class="box-head"><span>'+L('备注参考方案','Reference plan')+'</span><span class="conf-badge conf-'+rk.conf+'">'+confText+'</span></div>'+
+          '<ul class="remark-list">'+rk.summary.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
+          '<div class="remark-advice">'+rk.advice.map(function(x){return '<div><b>·</b> '+x+'</div>';}).join('')+'</div></div>'+
+        '<div class="sop-chart-box"><div class="box-head">'+L('方案 SOP 流程','SOP Flow')+'</div>'+
+          renderFlowChart(plainResult.fields.workflow)+'</div>'+
+      '</div>';
+    })() : '')+
+  '</div>'+
+
+  /* 工作流选择 */
+  '<div class="flow-cards">' + Object.keys(WORKFLOWS).map(function(k){
+    const w = WORKFLOWS[k];
+    const icons = {
+      photo:'<path d="M4 17l4-5 3 3.5L15 11l5 7"/><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/>',
+      cad:'<path d="M12 3v18M3 8h18M5 16l14-8M7 19l10-12"/>',
+      su:'<path d="M12 3l9 5v8l-9 5-9-5V8z"/><path d="M12 3v18M3 8l9 5 9-5"/>',
+      cross:'<path d="M3 10h18M6 10v10h12V10M10 10V6h4v4M8.5 14h7M8.5 17h5"/>'
+    };
+    return '<button type="button" class="flow-card'+(state.workflow===k?' on':'')+'" data-flow="'+k+'">'+
+      '<svg viewBox="0 0 24 24" stroke-width="1.7">'+icons[k]+'</svg>'+
+      '<span class="flow-card-text"><b>'+w.name+'</b><span>'+w.cardDesc+'</span></span></button>';
+  }).join('') + '</div>'+
+
+  '<div class="studio-grid"><div class="studio-config">'+
+
+    /* 参考图配置 */
+    '<div class="card"><div class="card-title"><span class="idx">1</span>'+L('参考图配置','Reference Setup')+
+      '<span class="hint">'+L('在生图工具中按此顺序上传','Upload in this order')+'</span></div>'+
+      '<div class="field"><div class="field-label">'+L('参考图数量（最多 6 张）','Image count (up to 6)')+'</div>'+
+        '<div class="seg" data-refcount>'+[1,2,3,4,5,6].map(function(n){
+          return '<button data-n="'+n+'" class="'+(state.refCount===n?'active':'')+'">'+n+'</button>';
+        }).join('')+'</div></div>'+
+      '<div class="ref-slots">' + wf.refs.concat(EXTRA_REF_ROLES).slice(0,state.refCount).map(function(r){
+        return '<div class="ref-slot"><b><span class="num">'+r.num+'</span>'+L('参考图','Ref ')+r.num+'</b><p>'+T(r)+'</p></div>';
+      }).join('') + '</div></div>'+
+
+    /* 遮罩区域（仅图改图） */
+    (state.workflow==='photo' ?
+    '<div class="card"><div class="mask-zone"><div class="field-label">'+L('遮罩区域修改（在 PS 中先圈出/标注修改范围）','Masked edit (mark the area in PS first)')+'</div>'+
+      '<textarea id="maskTarget" rows="2" placeholder="'+L('例：将该区域改造为林下休憩广场，增加花岗岩铺装、香樟与休闲座椅','e.g. turn this area into a shaded plaza with granite paving, camphor trees and benches')+'">'+state.maskTarget+'</textarea></div></div>' : '')+
+
+    /* 项目与出图 */
+    '<div class="card"><div class="card-title"><span class="idx">2</span>'+L('项目与出图内容','Subject & Output')+'</div>'+
+      '<div class="field" data-key="project" data-multi="false" data-group="projectType"><div class="field-label">'+L('项目类型','Project type')+'</div>'+
+        chipGroup(DATA.projectType,state.project,false)+'</div>'+
+      (state.workflow==='cross'
+        ? '<div class="field" data-key="crossMode" data-multi="false" data-group="CROSS_MODES"><div class="field-label">'+L('出图模式','Section mode')+'</div>'+
+          chipGroup(CROSS_MODES,state.crossMode,false)+'</div>'
+        : '<div class="field" data-key="output" data-multi="false" data-group="outputType"><div class="field-label">'+L('出图类型 / 视角','Output / view')+'</div>'+
+          chipGroup(DATA.outputType,state.output,false)+'</div>')+
+      ((state.project==='bridge'||state.project==='flyover')
+        ? '<div class="field" data-key="bridgeType" data-multi="false" data-group="BRIDGE_TYPES"><div class="field-label">'+L('桥型结构','Bridge type')+'</div>'+
+          chipGroup(BRIDGE_TYPES,state.bridgeType,false)+'</div>'
+        : '')+'</div>'+
+
+    /* 风格与光影 */
+    '<div class="card"><div class="card-title"><span class="idx">3</span>'+L('风格与光影','Style & Lighting')+'</div>'+
+      '<div class="field" data-key="style" data-multi="false" data-group="style"><div class="field-label">'+L('视觉风格','Style')+'</div>'+
+        chipGroup(DATA.style,state.style,false)+'</div>'+
+      '<div class="row2">'+
+        '<div class="field" data-key="time" data-multi="false" data-group="time"><div class="field-label">'+L('时段','Time')+'</div>'+
+          chipGroup(DATA.time,state.time,false)+'</div>'+
+        '<div class="field" data-key="season" data-multi="false" data-group="season"><div class="field-label">'+L('季相','Season')+'</div>'+
+          chipGroup(DATA.season,state.season,false)+'</div></div>'+
+      '<div class="field" data-key="weather" data-multi="false" data-group="weather"><div class="field-label">'+L('天气 / 光质','Weather')+'</div>'+
+        chipGroup(DATA.weather,state.weather,false)+'</div></div>'+
+
+    /* 植物与材质 */
+    '<div class="card"><div class="card-title"><span class="idx">4</span>'+L('植物与材质','Planting & Materials')+
+      '<span class="hint">'+L('可多选','multi-select')+'</span></div>'+
+      (state.workflow==='cross'
+        ? '<div class="field" data-key="crossElements" data-multi="true" data-group="CROSS_ELEMENTS"><div class="field-label">'+L('横断面要素（多选）','Section elements')+'</div>'+
+          chipGroup(CROSS_ELEMENTS,state.crossElements,true,'ochre')+'</div>'
+        : '')+
+      '<div class="field" data-key="plants" data-multi="true" data-group="plants"><div class="field-label">'+L('植物配置（江浙沪常用苗木）','Planting')+'</div>'+
+        chipGroup(DATA.plants,state.plants,true,'blue')+'</div>'+
+      '<div class="field" data-key="materials" data-multi="true" data-group="materials"><div class="field-label">'+L('主要材质','Materials')+'</div>'+
+        chipGroup(DATA.materials,state.materials,true)+'</div></div>'+
+
+    /* 道路标线专项开关（横断面工作流不适用，隐藏） */
+    (state.workflow==='cross' ? '' :
+    '<div class="card"><div class="card-title"><span class="idx">5</span>'+L('道路标线保真','Road Marking Control')+'</div>'+
+      '<div class="field"><label class="switch-row"><span class="switch '+(state.lane?'on':'')+'" data-switch="lane"></span>'+
+        '<span class="sw-text"><b>'+L('启用标线强制约束','Enable marking constraints')+'</b><br>'+L('在提示词中锁定标线几何与透视，并给出对应负向词','Locks marking geometry and adds negatives')+'</span></label></div>'+
+      '<div class="field"><label class="switch-row"><span class="switch '+(state.laneNeg?'on':'')+'" data-switch="laneNeg"></span>'+
+        '<span class="sw-text">'+L('负向词中排除抽象/融化标线','Exclude abstract / melted markings in negatives')+'</span></label></div></div>')+
+
+    /* 质量与负向 */
+    '<div class="card"><div class="card-title"><span class="idx">6</span>'+L('画面质量与负向词','Quality & Negatives')+'</div>'+
+      '<div class="field" data-key="quality" data-multi="true" data-group="quality"><div class="field-label">'+L('画面质量（多选）','Quality')+'</div>'+
+        chipGroup(DATA.quality,state.quality,true)+'</div>'+
+      '<div class="field" data-key="negatives" data-multi="true" data-group="negatives"><div class="field-label">'+L('负向提示词（默认全选）','Negative prompts')+'</div>'+
+        chipGroup(DATA.negatives,state.negatives,true,'ochre')+'</div></div>'+
+
+    /* 自定义与重置 */
+    '<div class="card"><div class="card-title"><span class="idx">7</span>'+L('自定义补充','Custom')+'</div>'+
+      '<textarea id="customInput" rows="3" placeholder="'+L('补充任何词库未覆盖的要求，会原样加入提示词','Anything not covered above; added verbatim')+'">'+state.custom+'</textarea></div>'+
+
+    /* PS 操作指南（含快捷键，随工作流变化） */
+    (function(){
+      const g = PS_GUIDE[state.workflow];
+      return '<div class="card"><div class="card-title"><span class="idx">8</span>'+
+        L('PS 操作指南（含快捷键）','PS Guide & Shortcuts')+'</div>'+
+        '<div class="ps-guide">'+g.steps.map(function(s){
+          return '<div class="ps-step"><span>'+s.act+'</span><span class="ps-keys">'+
+            s.keys.map(function(k){return '<kbd>'+k+'</kbd>';}).join('')+'</span></div>';
+        }).join('')+'</div></div>';
+    })()+
+
+  '</div><div class="studio-out">'+
+    /* 工具提示 */
+    '<div class="card" style="padding:13px 16px"><div class="field-label" style="margin-bottom:5px">'+L('当前工具建议','Tool tip')+' · '+
+      ({banana:'Nano Banana',seedream:'Seedream',image:'Image'})[state.tool]+'</div>'+
+      '<p style="font-size:12.5px;color:var(--ink-2);line-height:1.7">'+TOOL_NOTES[state.tool][state.lang]+'</p></div>'+
+    '<div class="out-tabs">'+
+      '<button class="out-tab '+(outTab==='struct'?'active':'')+'" data-outtab="struct">'+L('结构化版','Structured')+'</button>'+
+      '<button class="out-tab '+(outTab==='clean'?'active':'')+'" data-outtab="clean">'+L('纯净版','Clean')+'</button>'+
+      '<button class="out-tab '+(outTab==='neg'?'active':'')+'" data-outtab="neg">'+L('负向词','Negatives')+'</button>'+
+      '<button class="out-tab '+(outTab==='full'?'active':'')+'" data-outtab="full">'+L('完整方案','Full plan')+'</button></div>'+
+    '<div class="out-box"><div class="out-actions">'+
+      '<button class="btn btn-primary" id="btnCopy"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>'+L('复制提示词','Copy')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" id="btnSaveTpl">'+L('存为模板','Save as template')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" id="btnReset">'+L('重置参数','Reset')+'</button></div>'+
+      '<div class="out-content" id="outContent">'+escapeHtml(currentOutput())+'</div>'+
+      '<div class="prompt-meta"><span id="metaCount">'+L('字符数','Chars')+'：'+currentOutput().length+'</span>'+
+        '<span>'+L('工作流','Workflow')+'：'+wf.name+'</span></div></div>'+
+  '</div></div>';
+
+  $('#mountStudio').innerHTML = html;
+  bindStudio();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function refreshOutput(){
+  const box = $('#outContent');
+  if(box){ box.textContent = currentOutput(); $('#metaCount').textContent = L('字符数','Chars')+'：'+currentOutput().length; }
+}
+
+function defaultState(){
+  return {
+    workflow:'photo', tool:'seedream', lang:'zh', refCount:1,
+    project:'', output:'', style:'', time:'', season:'', weather:'',
+    plants:[], materials:[], quality:[],
+    negatives:DATA.negatives.map(function(n){return n.id;}),
+    lane:false, laneNeg:true, maskTarget:'', custom:'',
+    bridgeType:'', crossMode:'section', crossElements:[]
+  };
+}
+function resetParams(){
+  const keep = {workflow:state.workflow, tool:state.tool, lang:state.lang};
+  state = Object.assign(defaultState(), keep);
+  outTab = 'struct';
+}
+
+function bindStudio(){
+  const root = $('#mountStudio');
+  /* 白话命令 */
+  const exFull = [
+    '用现场航拍图做一条城市道路的鸟瞰效果图，写实风格，上午光线，车道标线要清楚',
+    '把CAD道路横断面线稿生成写实剖面，要有结构层和土层',
+    '基于SU模型做一个跨河斜拉桥的黄昏夜景半鸟瞰',
+    'CAD线稿简单上色后生成公园彩平，正俯视'
+  ];
+  $('#plainParse',root).addEventListener('click',function(){
+    const v = $('#plainInput',root).value;
+    plainText = v;
+    if(!v.trim()){ plainResult=null; renderStudio(); return; }
+    plainResult = parsePlainCommand(v);
+    applyParse(plainResult);
+    renderStudio();
+  });
+  $('#plainClear',root).addEventListener('click',function(){
+    plainText=''; plainResult=null; renderStudio();
+  });
+  $all('.plain-ex',root).forEach(function(b){
+    b.addEventListener('click',function(){
+      const v = exFull[parseInt(b.dataset.ex,10)];
+      plainText=v; plainResult=parsePlainCommand(v); applyParse(plainResult);
+      renderStudio();
+    });
+  });
+  /* 工作流卡片 */
+  $all('.flow-card',root).forEach(function(btn){
+    btn.addEventListener('click',function(){ state.workflow = btn.dataset.flow; renderStudio(); });
+  });
+  /* 参考图数量 */
+  $('[data-refcount]',root).addEventListener('click',function(e){
+    const b = e.target.closest('button'); if(!b) return;
+    state.refCount = parseInt(b.dataset.n,10); renderStudio();
+  });
+  /* chips 事件委托 */
+  $all('.field[data-key]',root).forEach(function(field){
+    field.addEventListener('click',function(e){
+      const chip = e.target.closest('.chip'); if(!chip) return;
+      const key = field.dataset.key, multi = field.dataset.multi==='true', id = chip.dataset.id;
+      if(multi){
+        const arr = state[key], i = arr.indexOf(id);
+        if(i>=0){ arr.splice(i,1); chip.classList.remove('on'); }
+        else { arr.push(id); chip.classList.add('on'); }
+      }else{
+        state[key] = (state[key]===id ? '' : id);
+        $all('.chip',field).forEach(function(c){c.classList.remove('on');});
+        if(state[key]) chip.classList.add('on');
+      }
+      refreshOutput();
+    });
+  });
+  /* 开关 */
+  $all('.switch',root).forEach(function(sw){
+    sw.addEventListener('click',function(){
+      const key = sw.dataset.switch;
+      state[key] = !state[key];
+      sw.classList.toggle('on',state[key]);
+      refreshOutput();
+    });
+  });
+  /* 文本域 */
+  const mask = $('#maskTarget',root);
+  if(mask) mask.addEventListener('input',function(){ state.maskTarget = mask.value; refreshOutput(); });
+  $('#customInput',root).addEventListener('input',function(){ state.custom = this.value; refreshOutput(); });
+  /* 输出 tab */
+  $all('.out-tab',root).forEach(function(tab){
+    tab.addEventListener('click',function(){
+      outTab = tab.dataset.outtab;
+      $all('.out-tab',root).forEach(function(t){t.classList.remove('active');});
+      tab.classList.add('active'); refreshOutput();
+    });
+  });
+  /* 复制并记录历史 */
+  $('#btnCopy',root).addEventListener('click',function(){
+    copyText(currentOutput()); addHistory();
+  });
+  $('#btnSaveTpl',root).addEventListener('click',saveAsTemplate);
+  $('#btnReset',root).addEventListener('click',function(){ resetParams(); renderStudio(); toast(L('参数已重置','Reset done')); });
+}
+
+/* ============================================================
+   八、模板保存 / 历史记录 / 模板套用
+   ============================================================ */
+function saveAsTemplate(){
+  const name = window.prompt(L('为模板命名（如：市政道路高角度鸟瞰）','Template name:'));
+  if(!name || !name.trim()) return;
+  store.myTemplates.unshift({
+    id:'tpl_'+Date.now(), name:name.trim(), mine:true,
+    state:JSON.parse(JSON.stringify(state)),
+    createdAt:new Date().toISOString()
+  });
+  saveStore(); toast(L('模板已保存','Template saved'));
+}
+function addHistory(){
+  const parts = [];
+  if(state.project) parts.push(findById(DATA.projectType,state.project).zh);
+  if(state.output) parts.push(findById(DATA.outputType,state.output).zh);
+  const summary = parts.join(' · ') || WORKFLOWS[state.workflow].name;
+  store.history.unshift({
+    id:'h_'+Date.now(), time:new Date().toISOString(),
+    workflow:state.workflow, tool:state.tool, summary,
+    text:currentOutput(), neg:buildNegText()
+  });
+  if(store.history.length>60) store.history.length = 60;
+  saveStore(); updateHistBadge();
+}
+function updateHistBadge(){
+  const b = $('#histBadge');
+  if(store.history.length){ b.style.display='inline-block'; b.textContent = store.history.length; }
+  else b.style.display='none';
+}
+
+/* ============================================================
+   九、路由与顶栏
+   ============================================================ */
+function switchView(name){
+  $all('.nav-item').forEach(function(n){ n.classList.toggle('active', n.dataset.view===name); });
+  $all('.view').forEach(function(v){ v.classList.remove('active'); });
+  $('#view-'+name).classList.add('active');
+  if(name==='studio') renderStudio();
+  if(name==='tools') renderTools();
+  if(name==='templates') renderTemplates();
+  if(name==='sop') renderSop();
+  if(name==='history') renderHistory();
+  window.scrollTo(0,0);
+}
+$all('.nav-item').forEach(function(n){
+  n.addEventListener('click',function(){ switchView(n.dataset.view); });
+});
+$('#toolSeg').addEventListener('click',function(e){
+  const b = e.target.closest('button'); if(!b) return;
+  state.tool = b.dataset.tool;
+  $all('#toolSeg button').forEach(function(x){x.classList.remove('active');});
+  b.classList.add('active');
+  if($('#view-studio').classList.contains('active')) renderStudio();
+});
+$('#langSeg').addEventListener('click',function(e){
+  const b = e.target.closest('button'); if(!b) return;
+  state.lang = b.dataset.lang;
+  $all('#langSeg button').forEach(function(x){x.classList.remove('active');});
+  b.classList.add('active');
+  const activeNav = $all('.nav-item').find(function(n){return n.classList.contains('active');});
+  switchView(activeNav.dataset.view);
+});
+
+/* 其余视图占位，后续批次实现 */
+/* ============================================================
+   专项工具状态
+   ============================================================ */
+let toolState = { batchDirs:['S','SW'], tilt:65, height:150 };
+
+function renderTools(){
+  const html =
+  '<div class="view-head"><h1>'+L('专项工具','Special Tools')+'</h1>'+
+    '<p>'+L('针对两个高频痛点：道路标线被 AI 抽象化、同一参考图生成多视角鸟瞰。','For the two recurring pain points: abstracted road markings and multi-angle aerial views.')+'</p></div>'+
+
+  /* ===== 模块一：道路标线保真 ===== */
+  '<div class="card"><div class="card-title"><span class="idx">A</span>'+L('道路标线保真','Road Marking Preservation')+'</div>'+
+    '<div class="field-label">'+L('① 标线约束提示词（可直接复制，配合任一策略使用）','Constraint clause (copy with any strategy)')+'</div>'+
+    '<div class="batch-out" style="max-height:170px;margin-bottom:12px">'+escapeHtml(LANE_CLAUSE[state.lang])+'</div>'+
+    '<div class="tpl-actions" style="margin-bottom:16px"><button class="btn btn-ghost btn-sm" id="copyLane">'+L('复制约束句','Copy clause')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" id="copyLaneNeg">'+L('复制标线负向词','Copy lane negatives')+'</button></div>'+
+    '<div class="field-label">'+L('② 三种保真策略（按推荐度选用）','Three strategies by preference')+'</div>'+
+    '<div class="tool-hero">'+
+      '<div class="strategy recommend"><span class="tag">'+L('推荐','Recommended')+'</span><h3>'+L('策略一：分层局部重绘','S1 · Layered inpaint')+'</h3><ol>'+
+        '<li>'+L('PS 中用钢笔/魔棒精确选中全部标线，Ctrl+J 复制为独立图层并置顶','Select all markings precisely and copy to a top layer')+'</li>'+
+        '<li>'+L('隐藏标线图层，仅对下方路面与周边做 AI 重绘（或用遮罩盖住标线）','Hide it and inpaint only the road and surroundings (or mask markings)')+'</li>'+
+        '<li>'+L('提示词只描述路面与周边，不提及标线；重绘后恢复标线图层','Prompt only road/surroundings, no mention of markings; restore the layer')+'</li>'+
+        '<li>'+L('微调标线亮度与混合模式，使其融入新光影','Tune brightness/blend mode to match new light')+'</li></ol>'+
+        '<div class="param">'+L('重绘幅度 / denoise','Denoise')+' <b>0.35 – 0.50</b></div></div>'+
+      '<div class="strategy"><span class="tag alt">'+L('次之','Alternative')+'</span><h3>'+L('策略二：线稿结构控制','S2 · Structural control')+'</h3><ol>'+
+        '<li>'+L('从底图单独提取标线，生成白底黑线的控制图','Extract markings into a black-on-white control image')+'</li>'+
+        '<li>'+L('生图时以控制图做线稿/边缘结构约束，锁定标线走向','Use line/edge control to lock marking geometry')+'</li>'+
+        '<li>'+L('同时启用标线约束提示词，双保险','Pair with the constraint clause')+'</li></ol>'+
+        '<div class="param">'+L('控制权重 / weight','Weight')+' <b>0.6 – 0.8</b></div></div></div>'+
+    '<div class="strategy" style="max-width:520px"><span class="tag alt">'+L('兜底','Fallback')+'</span><h3>'+L('策略三：全图生成 + PS 贴回','S3 · Generate then paste back')+'</h3><ol>'+
+      '<li>'+L('启用标线约束正常全图生成，先尽量减少失真','Generate full image with the constraint clause')+'</li>'+
+      '<li>'+L('将原标线图层对齐，透视/变形匹配新画面','Align the original marking layer with perspective warp')+'</li>'+
+      '<li>'+L('正常或正片叠底模式贴回，蒙版擦除遮挡处','Paste back with mask for occluded parts')+'</li></ol>'+
+      '<div class="param">'+L('重绘幅度 / denoise','Denoise')+' <b>0.55 – 0.70</b></div></div></div>'+
+
+  /* ===== 模块二：多视角鸟瞰 ===== */
+  '<div class="card"><div class="card-title"><span class="idx">B</span>'+L('多视角鸟瞰批量生成','Multi-Angle Aerial Batch')+
+    '<span class="hint">'+L('勾选多个方位，一次产出多套视角提示词','Tick directions to batch prompts')+'</span></div>'+
+    '<div class="compass-wrap"><div>'+
+      '<div class="compass" id="compass"><div class="needle-layer" id="needleLayer"></div>'+
+        '<div class="center-dot"></div>'+ compassDirButtons() +'</div></div>'+
+      '<div>'+
+        '<div class="field-label">'+L('俯角（tilt-down）','Tilt-down angle')+'</div>'+
+        '<div class="view-param-row"><label>'+L('俯角','Tilt')+'</label><input type="range" id="tiltRange" min="15" max="90" value="'+toolState.tilt+'"><span class="val">'+toolState.tilt+'°</span></div>'+
+        '<div class="chips" style="margin-bottom:14px" id="tiltPresets">'+ TILTS.map(function(t){
+          return '<button type="button" class="chip" data-v="'+t.v+'">'+T(t)+'</button>';}).join('')+'</div>'+
+        '<div class="field-label">'+L('相机高度（相对场地）','Camera altitude')+'</div>'+
+        '<div class="view-param-row"><label>'+L('高度','Height')+'</label><input type="range" id="heightRange" min="30" max="400" step="10" value="'+toolState.height+'"><span class="val">'+toolState.height+'m</span></div>'+
+        '<div class="chips" style="margin-bottom:14px" id="heightPresets">'+ HEIGHTS.map(function(h){
+          return '<button type="button" class="chip" data-h="'+h.h+'">'+T(h)+'</button>';}).join('')+'</div>'+
+        '<div class="field-label">'+L('已选方位（点击罗盘或下方按钮增删）','Selected directions')+'</div>'+
+        '<div class="azimuth-grid" id="azGrid">'+ DIRS.map(function(d){
+          const on = toolState.batchDirs.indexOf(d.id)>=0;
+          return '<button type="button" class="chip '+(on?'on':'')+'" data-dir="'+d.id+'">'+T(d)+'</button>';}).join('')+'</div>'+
+      '</div></div>'+
+    '<div class="field-label" style="margin-top:16px">'+L('批量提示词（含参考图锁定 + 一致性锚点 + 各视角）','Batch prompt output')+'</div>'+
+    '<div class="batch-out" id="batchOut">'+escapeHtml(buildBatchText())+'</div>'+
+    '<div class="tpl-actions" style="margin-top:12px"><button class="btn btn-primary btn-sm" id="copyBatch">'+L('复制批量提示词','Copy batch prompt')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" id="copyAnchor">'+L('仅复制一致性锚点','Copy anchor only')+'</button></div></div>';
+
+  $('#mountTools').innerHTML = html;
+  bindTools();
+}
+
+function compassDirButtons(){
+  const c = 115, r = 95;
+  return DIRS.map(function(d){
+    const rad = d.deg*Math.PI/180;
+    const x = c + r*Math.sin(rad), y = c - r*Math.cos(rad);
+    const on = toolState.batchDirs.indexOf(d.id)>=0;
+    return '<button type="button" class="dir-btn '+(on?'on':'')+'" data-dir="'+d.id+
+      '" style="left:'+(x-15)+'px;top:'+(y-15)+'px">'+d.id+'</button>';
+  }).join('') +
+  DIRS.map(function(d){
+    const rad = d.deg*Math.PI/180, rl = 108;
+    const x = c + rl*Math.sin(rad), y = c - rl*Math.cos(rad);
+    return '<span class="ring-label" style="left:'+(x-11)+'px;top:'+(y-8)+'px">'+d.zh+'</span>';
+  }).join('');
+}
+
+/* 参考图锁定与一致性锚点 */
+const REF_LOCK_CLAUSE = {
+  zh:'以参考图1的设计内容为唯一依据，在不改变任何设计要素、材质、植物与配色的前提下，仅改变相机机位与取景角度重新取景。',
+  en:'Use the design in reference image 1 as the single source of truth. Without changing any design element, material, plant or color, reframe the scene only by moving the camera.'
+};
+const ANCHOR_CLAUSE = {
+  zh:'【一致性锚点】本系列各视角图必须保持同一项目设定：相同的建筑与场地体块、材质种类与色彩、植物品种与规格、铺装拼法、光照方向与色温、整体配色与氛围；仅允许相机机位与取景角度变化，不得改变任何设计内容。',
+  en:'CONSISTENCY ANCHOR: All views in this series share one project setup — identical masses, material types and colors, plant species and sizes, paving patterns, light direction and color temperature, palette and mood. Only the camera position and framing may change; no design content may vary.'
+};
+function viewClause(d){
+  const v = toolState.tilt, h = toolState.height;
+  if(state.lang==='zh'){
+    if(v>=85) return '相机位于场地正上方垂直向下俯视，相对高度约 '+h+'m，完整呈现总平面布局；';
+    if(v<=22) return '相机位于场地'+d.zh+'侧近地面高度，以约 '+v+'° 轻微俯角朝向场地中心，呈现人视空间感；';
+    return '相机位于场地'+d.zh+'侧方位，相对高度约 '+h+'m，以约 '+v+'° 俯角朝向场地中心取景，远近层次清晰；';
+  }
+  if(v>=85) return 'Camera directly above the site looking straight down at about '+h+' m altitude, showing the full plan layout;';
+  if(v<=22) return 'Camera at near-ground level to the '+d.en+' of the site, tilted only '+v+'° toward the center for an eye-level feel;';
+  return 'Camera positioned to the '+d.en+' of the site at about '+h+' m altitude, looking toward the center at a '+v+'° tilt-down angle with clear depth;';
+}
+function buildBatchText(){
+  const dirs = DIRS.filter(function(d){return toolState.batchDirs.indexOf(d.id)>=0;});
+  if(!dirs.length) return L('请至少选择一个方位','Select at least one direction first.');
+  let out = REF_LOCK_CLAUSE[state.lang]+'\n\n'+ANCHOR_CLAUSE[state.lang]+'\n';
+  dirs.forEach(function(d,i){
+    out += '\n【'+L('视角','View')+' '+(i+1)+' · '+T(d)+'】\n'+viewClause(d);
+  });
+  return out;
+}
+function renderNeedles(){
+  const layer = $('#needleLayer');
+  layer.style.position='absolute'; layer.style.inset='0';
+  const c=115, r=80;
+  const lines = toolState.batchDirs.map(function(id){
+    const d = findById(DIRS,id), rad = d.deg*Math.PI/180;
+    const x = c + r*Math.sin(rad), y = c - r*Math.cos(rad);
+    return '<line x1="'+c+'" y1="'+c+'" x2="'+x+'" y2="'+y+'" stroke="#BC6429" stroke-width="2" stroke-linecap="round"/>';
+  }).join('');
+  layer.innerHTML = '<svg viewBox="0 0 230 230" style="width:100%;height:100%">'+lines+'</svg>';
+}
+function toggleDir(id){
+  const i = toolState.batchDirs.indexOf(id);
+  if(i>=0) toolState.batchDirs.splice(i,1); else toolState.batchDirs.push(id);
+  $all('#compass .dir-btn').forEach(function(b){ b.classList.toggle('on', toolState.batchDirs.indexOf(b.dataset.dir)>=0); });
+  $all('#azGrid .chip').forEach(function(b){ b.classList.toggle('on', toolState.batchDirs.indexOf(b.dataset.dir)>=0); });
+  renderNeedles(); $('#batchOut').textContent = buildBatchText();
+}
+
+function bindTools(){
+  $('#copyLane').addEventListener('click',function(){ copyText(LANE_CLAUSE[state.lang], L('标线约束句已复制','Clause copied')); });
+  $('#copyLaneNeg').addEventListener('click',function(){
+    const txt = DATA.laneNeg.map(function(n){return T(n);}).join(L('，',', '));
+    copyText(txt, L('标线负向词已复制','Lane negatives copied'));
+  });
+  $all('#compass .dir-btn').forEach(function(b){
+    b.addEventListener('click',function(){ toggleDir(b.dataset.dir); });
+  });
+  $all('#azGrid .chip').forEach(function(b){
+    b.addEventListener('click',function(){ toggleDir(b.dataset.dir); });
+  });
+  const tiltRange = $('#tiltRange');
+  tiltRange.addEventListener('input',function(){
+    toolState.tilt = parseInt(tiltRange.value,10);
+    tiltRange.nextElementSibling.textContent = toolState.tilt+'°';
+    $('#batchOut').textContent = buildBatchText();
+  });
+  $all('#tiltPresets .chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      toolState.tilt = parseInt(c.dataset.v,10);
+      tiltRange.value = toolState.tilt;
+      tiltRange.nextElementSibling.textContent = toolState.tilt+'°';
+      $('#batchOut').textContent = buildBatchText();
+    });
+  });
+  const heightRange = $('#heightRange');
+  heightRange.addEventListener('input',function(){
+    toolState.height = parseInt(heightRange.value,10);
+    heightRange.nextElementSibling.textContent = toolState.height+'m';
+    $('#batchOut').textContent = buildBatchText();
+  });
+  $all('#heightPresets .chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      toolState.height = parseInt(c.dataset.h,10);
+      heightRange.value = toolState.height;
+      heightRange.nextElementSibling.textContent = toolState.height+'m';
+      $('#batchOut').textContent = buildBatchText();
+    });
+  });
+  $('#copyBatch').addEventListener('click',function(){ copyText(buildBatchText(), L('批量提示词已复制','Batch prompt copied')); });
+  $('#copyAnchor').addEventListener('click',function(){ copyText(ANCHOR_CLAUSE[state.lang], L('一致性锚点已复制','Anchor copied')); });
+  renderNeedles();
+}
+
+/* ============================================================
+   内置专业模板（build 返回完整 state 快照）
+   ============================================================ */
+const Q_ALL = ['8k','archviz','gi','shadow','texture','dof','compose','detail','scale','entourage'];
+const BUILTIN_TEMPLATES = [
+  {id:'b1',name:'市政道路航拍改造鸟瞰',desc:'基于航拍/现状图，道路提升后高角度鸟瞰，标线强制保真',
+    tags:['图改图','高角度鸟瞰'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'photo',project:'road',output:'high-aerial',
+      style:'photo-real',time:'morning',season:'summer',weather:'clear',
+      plants:['camphor','plane','photinia','lawn'],materials:['asphalt','granite'],
+      lane:true,quality:Q_ALL}); }},
+  {id:'b2',name:'道路路口标线保真图改',desc:'路口局部改造，遮罩区域修改，标线图层独立保留',
+    tags:['图改图','节点局部'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'photo',project:'road',output:'node',
+      style:'photo-real',time:'afternoon',season:'summer',weather:'clear',
+      maskTarget:'优化路口渠化与导流岛，更换花岗岩铺装并补充导向标识绿化',
+      plants:['camphor','photinia','holly','lawn'],materials:['asphalt','granite','corten'],
+      lane:true,quality:Q_ALL}); }},
+  {id:'b3',name:'综合公园 CAD 彩色总平',desc:'线稿+分区底色，正俯视平面化彩平，植物图例统一',
+    tags:['CAD彩平','正俯视'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'cad',project:'park',output:'master-plan',
+      style:'flat',
+      plants:['camphor','zelkova','cherry','maple','hydrangea','iris','lawn'],
+      materials:['granite','pcbrick','timber','water','pervious'],
+      quality:['archviz','compose','detail']}); }},
+  {id:'b4',name:'城市广场水彩彩平',desc:'广场铺装彩平，水彩淡彩表达，边界清晰、投影统一',
+    tags:['CAD彩平','水彩'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'cad',project:'plaza',output:'master-plan',
+      style:'watercolor',
+      plants:['ginkgo','myrtle','mondo','lawn'],
+      materials:['granite','cobble','stone','water'],
+      quality:['archviz','compose','detail']}); }},
+  {id:'b5',name:'综合公园 SU 半鸟瞰',desc:'SU 视角渲染，黄昏光影，投标级写实效果',
+    tags:['SU效果图','半鸟瞰'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'park',output:'mid-aerial',
+      style:'photo-real',time:'golden',season:'autumn',weather:'clear',
+      plants:['ginkgo','zelkova','celtis','azalea','lawn'],materials:['timber','granite','water'],
+      quality:Q_ALL}); }},
+  {id:'b6',name:'滨水绿道 SU 人视',desc:'河道岸线人视透视，D5/LUMION 实时渲染风',
+    tags:['SU效果图','人视'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'waterfront',output:'eye',
+      style:'d5',time:'morning',season:'summer',weather:'cloudy',
+      plants:['willow','redwood','iris','lawn'],materials:['timber','wpc','water','faced'],
+      quality:Q_ALL}); }},
+  {id:'b7',name:'居住区新中式半鸟瞰',desc:'居住区景观半鸟瞰，新中式材质与植物配置',
+    tags:['SU效果图','新中式'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'residential',output:'mid-aerial',
+      style:'neo-chinese',time:'afternoon',season:'spring',weather:'clear',
+      plants:['osmanthus','magnolia','maple','pittosporum','mondo'],materials:['granite','cobble','corten','water'],
+      quality:Q_ALL}); }},
+  {id:'b8',name:'口袋公园节点效果图',desc:'街头绿地节点改造，现代简约，小尺度精细表达',
+    tags:['SU效果图','节点'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'pocket',output:'node',
+      style:'modern',time:'morning',season:'summer',weather:'clear',
+      plants:['camphor','cherry','hydrangea','lawn'],materials:['pervious','timber','corten','granite'],
+      quality:Q_ALL}); }},
+  {id:'b9',name:'产业园区高角度鸟瞰',desc:'厂区/园区整体鸟瞰，体块与铺装清晰，配景尺度真实',
+    tags:['SU效果图','高角度鸟瞰'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'industrial',output:'high-aerial',
+      style:'photo-real',time:'noon',season:'summer',weather:'cloudy',
+      plants:['camphor','ginkgo','holly','lawn'],materials:['asphalt','pervious','glass','faced'],
+      quality:Q_ALL}); }},
+  {id:'b10',name:'滨水绿道 CAD 彩平',desc:'河道绿线正俯视彩平，蓝绿底色、岸线材质分明',
+    tags:['CAD彩平','正俯视'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'cad',project:'waterfront',output:'master-plan',
+      style:'flat',
+      plants:['willow','redwood','cherry','iris','lawn'],materials:['water','timber','granite','cobble'],
+      quality:['archviz','compose','detail']}); }},
+
+  /* ===== 市政桥梁系列 ===== */
+  {id:'b11',name:'跨河连续梁桥鸟瞰',desc:'混凝土箱梁桥高角度鸟瞰，桥墩、护栏与水面倒影真实',
+    tags:['SU效果图','市政桥梁'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'bridge',output:'high-aerial',bridgeType:'beam',
+      style:'photo-real',time:'morning',season:'summer',weather:'clear',
+      plants:['willow','camphor','lawn'],materials:['boxgirder','pier','railing','water','asphalt'],
+      quality:Q_ALL}); }},
+  {id:'b12',name:'景观拱桥人视',desc:'下承式景观拱桥人视透视，钢结构与栏杆细节、水面倒影',
+    tags:['SU效果图','市政桥梁'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'bridge',output:'eye',bridgeType:'arch',
+      style:'photo-real',time:'afternoon',season:'spring',weather:'clear',
+      plants:['willow','cherry','iris','lawn'],materials:['steel','railing','water','granite','corten'],
+      quality:Q_ALL}); }},
+  {id:'b13',name:'斜拉桥黄昏夜景',desc:'斜拉桥半鸟瞰，傍晚蓝调、桥塔拉索与灯光、水面倒影',
+    tags:['SU效果图','市政桥梁'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'bridge',output:'mid-aerial',bridgeType:'cable-stayed',
+      style:'photo-real',time:'dusk',season:'summer',weather:'clear',
+      plants:['camphor','lawn'],materials:['steel','cable','pier','water','glass'],
+      quality:Q_ALL}); }},
+  {id:'b14',name:'人行天桥节点',desc:'钢结构人行天桥节点，现代简约，护栏与楼梯、街道配景',
+    tags:['SU效果图','市政桥梁'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'bridge',output:'node',bridgeType:'pedestrian',
+      style:'modern',time:'morning',season:'summer',weather:'cloudy',
+      plants:['camphor','photinia','lawn'],materials:['steel','railing','glass','granite','asphalt'],
+      quality:Q_ALL}); }},
+  {id:'b15',name:'高架立交半鸟瞰',desc:'高架立交桥半鸟瞰，箱梁墩柱与匝道，标线强制保真',
+    tags:['SU效果图','高架立交'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'flyover',output:'mid-aerial',bridgeType:'beam',
+      style:'photo-real',time:'noon',season:'summer',weather:'clear',
+      plants:['camphor','ginkgo','lawn'],materials:['boxgirder','pier','railing','asphalt','retaining'],
+      lane:true,quality:Q_ALL}); }},
+
+  /* ===== 道路横断面系列 ===== */
+  {id:'b16',name:'道路标准横断面写实',desc:'CAD 横断面线稿生成写实剖面，结构层与土层分层、配景真实',
+    tags:['横断面','写实剖面'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'cross',project:'road',crossMode:'section',
+      crossElements:['motor','nonmotor','sidewalk','median','sidebelt','curb','slope','ditch','guard','lamp','tree','hedge'],
+      style:'photo-real',time:'morning',weather:'clear',
+      plants:['camphor','photinia','lawn'],materials:['asphalt','pervious','granite','retaining','railing'],
+      quality:['archviz','texture','detail','compose','scale']}); }},
+  {id:'b17',name:'透视横断面街景',desc:'横断面要素沿道路纵深延伸的半透视真实街景',
+    tags:['横断面','透视街景'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'cross',project:'road',crossMode:'perspective',
+      crossElements:['motor','nonmotor','sidewalk','sidebelt','lamp','tree','guard'],
+      style:'photo-real',time:'afternoon',season:'summer',weather:'clear',
+      plants:['camphor','plane','lawn'],materials:['asphalt','granite','railing'],
+      quality:Q_ALL}); }},
+  {id:'b18',name:'刚构桥高角度鸟瞰',desc:'连续刚构桥高角度鸟瞰，混凝土墩梁一体、护栏与水面真实',
+    tags:['SU效果图','市政桥梁'],
+    build:function(){ return Object.assign(defaultState(),{workflow:'su',project:'bridge',output:'high-aerial',bridgeType:'rigid',
+      style:'photo-real',time:'morning',season:'summer',weather:'clear',
+      plants:['camphor','ginkgo','lawn'],materials:['faced','boxgirder','pier','railing','water'],
+      quality:Q_ALL}); }}
+];
+
+function tplCard(tpl, mine){
+  const icon = '<svg viewBox="0 0 24 24" stroke-width="1.7"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M15 4v5h5"/></svg>';
+  return '<div class="tpl-card'+(mine?' mine':'')+'"><div class="tpl-ico">'+icon+'</div>'+
+    '<div style="flex:1;min-width:0"><h3>'+tpl.name+'</h3><p>'+tpl.desc+'</p>'+
+    '<div class="tpl-tags">'+tpl.tags.map(function(t){return '<span>'+t+'</span>';}).join('')+'</div>'+
+    '<div class="tpl-actions"><button class="btn btn-primary btn-sm" data-apply="'+tpl.id+'">'+L('载入并使用','Load')+'</button>'+
+    (mine?'<button class="btn btn-ghost btn-sm" data-del="'+tpl.id+'">'+L('删除','Delete')+'</button>':'')+
+    '</div></div></div>';
+}
+
+function renderTemplates(){
+  const html =
+  '<div class="view-head"><h1>'+L('模板库','Template Library')+'</h1>'+
+    '<p>'+L('内置覆盖三大工作流的常用场景；工作台中可把当前配置存为自己的模板，数据保存在本机浏览器。','Built-in templates plus your own, stored locally in this browser.')+'</p></div>'+
+  '<div class="card" style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">'+
+    '<button class="btn btn-ghost btn-sm" id="exportTpl">'+L('导出我的模板（JSON）','Export (JSON)')+'</button>'+
+    '<button class="btn btn-ghost btn-sm" id="importTpl">'+L('导入模板','Import')+'</button>'+
+    '<input type="file" id="importFile" accept="application/json" style="display:none">'+
+    '<span style="font-size:12px;color:var(--ink-3)">'+L('用于备份或在其他电脑迁移','For backup or migration')+'</span></div>'+
+  '<div class="tpl-section-title">'+L('内置专业模板','Built-in templates')+'</div>'+
+  '<div class="tpl-grid">'+BUILTIN_TEMPLATES.map(function(t){return tplCard(t,false);}).join('')+'</div>'+
+  '<div class="tpl-section-title mine">'+L('我的模板','My templates')+'</div>'+
+  (store.myTemplates.length
+    ? '<div class="tpl-grid">'+store.myTemplates.map(function(t){return tplCard(t,true);}).join('')+'</div>'
+    : '<div class="empty"><svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg><p>'+L('还没有自定义模板，在工作台点「存为模板」即可收藏','No custom templates yet. Save one from the studio.')+'</p></div>');
+  $('#mountTemplates').innerHTML = html;
+  bindTemplates();
+}
+
+function bindTemplates(){
+  const root = $('#mountTemplates');
+  $all('[data-apply]',root).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const tpl = findById(BUILTIN_TEMPLATES,btn.dataset.apply) || findById(store.myTemplates,btn.dataset.apply);
+      if(tpl) applyTemplate(tpl);
+    });
+  });
+  $all('[data-del]',root).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const i = store.myTemplates.findIndex(function(t){return t.id===btn.dataset.del;});
+      if(i>=0){ store.myTemplates.splice(i,1); saveStore(); renderTemplates(); toast(L('模板已删除','Deleted')); }
+    });
+  });
+  $('#exportTpl').addEventListener('click',function(){
+    if(!store.myTemplates.length){ toast(L('暂无可导出的模板','Nothing to export')); return; }
+    const blob = new Blob([JSON.stringify(store.myTemplates,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = '我的效果图模板.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href); toast(L('模板已导出','Exported'));
+  });
+  $('#importTpl').addEventListener('click',function(){ $('#importFile').click(); });
+  $('#importFile').addEventListener('change',function(){
+    const f = this.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        const arr = JSON.parse(reader.result);
+        if(!Array.isArray(arr)) throw new Error('bad');
+        let n = 0;
+        arr.forEach(function(t){
+          if(t && t.name && t.state){
+            t.id = 'tpl_'+Date.now()+'_'+n; t.mine = true;
+            store.myTemplates.push(t); n++;
+          }
+        });
+        saveStore(); renderTemplates(); toast(L('已导入 '+n+' 个模板',n+' imported'));
+      }catch(e){ toast(L('文件格式不正确','Invalid file')); }
+    };
+    reader.readAsText(f,'UTF-8');
+  });
+}
+
+/* 兼容内置 build 与自定义 state 的模板套用 */
+function applyTemplate(tpl){
+  const tool = state.tool, lang = state.lang;
+  const snap = tpl.state ? tpl.state : tpl.build();
+  state = Object.assign(defaultState(), JSON.parse(JSON.stringify(snap)));
+  state.tool = tool; state.lang = lang;
+  outTab = 'struct';
+  switchView('studio');
+  toast(L('已载入模板，可继续调整','Template loaded'));
+}
+
+/* ============================================================
+   SOP 数据
+   ============================================================ */
+let sopTab = 'photo';
+const SOP_DATA = {
+  photo:{label:'图改图',steps:[
+    {title:'第一步 · 素材整理与镜头校正',items:[
+      '收集现状照片、航拍或卫星图，优先选用高分辨率、无明显畸变的底图',
+      'PS 中做镜头校正、去除色差，统一画幅比例；航拍图必要时做透视校正',
+      '同一项目固定一套画幅与分辨率，便于多视角成果统一'],
+      keys:[]},
+    {title:'第二步 · 划定修改区域与制作遮罩',items:[
+      '用快速选择或钢笔工具圈出修改范围并存储选区',
+      '新建红色半透明填充图层标注修改区域，导出一张带遮罩的标注图',
+      '涉及道路标线时，先将标线精确复制为独立图层并置顶（关键动作）'],
+      keys:[{t:'标线图层独立',type:'g'}]},
+    {title:'第三步 · 配置并生成提示词',items:[
+      '工作台选择「图改图」，按参考图顺序上传，粘贴遮罩区域指令',
+      '小范围修改用较低重绘幅度，改动越大可适当提高，但不建议超过上限',
+      '明确写清“仅改遮罩内、其余像素保持不变”，防止连带改动'],
+      keys:[{t:'重绘幅度 0.35 – 0.60',type:''}]},
+    {title:'第四步 · 结果检查与后处理',items:[
+      '检查未改区域是否被连带改动、边缘拼接是否自然、光影色调是否一致',
+      '恢复标线图层并微调融合；用仿制图章、曲线处理局部瑕疵',
+      '成图前统一锐化与色彩管理，按投标要求导出'],
+      keys:[]}
+  ]},
+  cad:{label:'CAD 线稿出彩平',steps:[
+    {title:'第一步 · CAD 整理与导出',items:[
+      '整理图层：道路、建筑、水体、绿地、文字标注分层，关闭无关图层',
+      '设置打印样式（.ctb）控制线宽，导出 PDF 或高清位图',
+      '确认线稿闭合、无断线，避免 AI 填充时边界错位'],
+      keys:[{t:'建议 300dpi',type:'g'}]},
+    {title:'第二步 · PS 分区铺底色',items:[
+      '按功能分区新建图层平涂基底色：道路深灰、绿地浅绿、水体浅蓝、建筑浅色',
+      '底色边界闭合、不越界，作为第二张参考图',
+      '保留一份纯线稿作为第一张参考图'],
+      keys:[]},
+    {title:'第三步 · 生成彩平提示词',items:[
+      '工作台选择「CAD 线稿出彩平」，图1 线稿、图2 分区底色',
+      '提示词强调正俯视、边界锁定、平面化材质、投影方向统一',
+      '明确要求画面内不生成任何文字，避免乱码标注'],
+      keys:[{t:'顶视 · 无文字',type:'g'}]},
+    {title:'第四步 · 后处理与成图',items:[
+      '核对边界是否越界、要素有无被擅自增删或移动',
+      '统一投影方向，替换或补充植物图例，检查整体配色协调性',
+      '图例、指北针、比例尺在 PS/CAD 中另行添加，不交给 AI 生成'],
+      keys:[]}
+  ]},
+  su:{label:'SU 视角出效果图',steps:[
+    {title:'第一步 · SketchUp 场景设置',items:[
+      '相机使用两点透视，定好机位与构图，显示安全框',
+      '设置阴影方位与时间，按需配置背景色与雾化',
+      '关闭多余轮廓线风格，导出 2x 分辨率 PNG'],
+      keys:[{t:'最短边 ≥ 2500px',type:'g'}]},
+    {title:'第二步 · 准备参考图',items:[
+      '图1：SU 导出图，可保留材质色块或使用纯白体块',
+      '图2（可选）：真实照片或意向图，仅作材质与氛围参考',
+      '明确主从关系，避免参考图改变 SU 的构图'],
+      keys:[]},
+    {title:'第三步 · 生成效果图',items:[
+      '工作台选择「SU 视角出效果图」，锁定透视与体块形体',
+      '写实风使用中等重绘幅度；需要多视角时改用专项工具 B',
+      '配景人物、车辆由 AI 补充，注意尺度与密度'],
+      keys:[{t:'重绘幅度 0.50 – 0.65',type:''}]},
+    {title:'第四步 · 后处理',items:[
+      '检查透视与形体是否漂移、材质与光影是否可信',
+      '补充配景层次、调整氛围，统一调色后锐化输出',
+      '同一项目多图复用一致性锚点，保证系列统一'],
+      keys:[]}
+  ]},
+  cross:{label:'CAD 横断面出效果图',steps:[
+    {title:'第一步 · 横断面整理与导出',items:[
+      '核对红线宽度、各功能带宽度、竖向设计、坡率与结构层厚度',
+      '图层分层并关闭无关文字标注，导出 PDF 或高清位图',
+      '确认线稿闭合，标高、尺寸与坡率标注清晰'],
+      keys:[{t:'建议 300dpi',type:'g'}]},
+    {title:'第二步 · 分区简单上色（可选）',items:[
+      'PS 中按功能带平涂基底色：路面、绿地、人行道、边坡与水体',
+      '作为第二张参考图，帮助 AI 区分材质与色彩边界',
+      '保留纯线稿作为第一张参考图'],
+      keys:[]},
+    {title:'第三步 · 选择模式并生成',items:[
+      '工作台选择「CAD 横断面出效果图」，选写实剖面或透视横断面',
+      '勾选横断面要素，强调结构层、土层分层与真实尺度配景',
+      '明确图内不生成文字，避免尺寸与标注乱码'],
+      keys:[{t:'重绘幅度 0.50 – 0.65',type:''}]},
+    {title:'第四步 · 后处理',items:[
+      '核对各功能带宽度、高差与坡率是否被改变',
+      '检查结构层、材质、植物与配景尺度，统一光影后锐化',
+      '尺寸标注、图例与说明另行在 PS/CAD 中添加'],
+      keys:[]}
+  ]}
+};
+
+/* ============================================================
+   PS 操作指南（按工作流，含快捷键；keys 为组合键数组）
+   ============================================================ */
+const PS_GUIDE = {
+  photo:{
+    zh:'图改图 · PS 操作',
+    steps:[
+      {act:'钢笔勾出修改区域，再转为选区',keys:['P','Ctrl+Enter']},
+      {act:'复制选中区域为独立图层，避免破坏原图',keys:['Ctrl+J']},
+      {act:'新建图层并用画笔标注遮罩范围（红色）',keys:['Ctrl+Shift+N','B']},
+      {act:'魔棒选中标线，复制为独立图层置顶保护',keys:['W','Ctrl+J']},
+      {act:'重绘后移动对齐、自由变换匹配透视',keys:['V','Ctrl+T']},
+      {act:'加图层蒙版，用画笔/仿制图章融合边缘',keys:['B','S']},
+      {act:'曲线统一调色，盖印后再锐化输出',keys:['Ctrl+M','Ctrl+Alt+Shift+E']}
+    ]},
+  cad:{
+    zh:'CAD 彩平 · PS 操作',
+    steps:[
+      {act:'打开 PDF 或线稿，按 300dpi 置入',keys:[]},
+      {act:'魔棒点选一个分区，新建图层',keys:['W','Ctrl+Shift+N']},
+      {act:'填充基底色，需要时反选处理边界',keys:['Alt+Delete','Ctrl+Shift+I']},
+      {act:'钢笔勾复杂边界并配合图层蒙版',keys:['P']},
+      {act:'双击图层打开样式，添加投影/描边',keys:[]},
+      {act:'移动植物图例，按住 Alt 拖动快速复制',keys:['V','Alt+拖动']},
+      {act:'完成后取消选择并导出图片',keys:['Ctrl+D']}
+    ]},
+  su:{
+    zh:'SU 效果图 · PS 操作',
+    steps:[
+      {act:'打开 SU 导出图，先复制一层备份',keys:['Ctrl+J']},
+      {act:'魔棒/钢笔选择要替换的材质区域',keys:['W','P']},
+      {act:'新建图层并叠加材质，改混合模式',keys:['Ctrl+Shift+N']},
+      {act:'拖入人物车辆，自由变换匹配尺度',keys:['Ctrl+T']},
+      {act:'曲线与色相饱和度统一光影色彩',keys:['Ctrl+M','Ctrl+U']},
+      {act:'盖印图层后执行滤镜锐化',keys:['Ctrl+Alt+Shift+E']},
+      {act:'取消选择并导出',keys:['Ctrl+D']}
+    ]},
+  cross:{
+    zh:'横断面 · PS 操作',
+    steps:[
+      {act:'打开横断面线稿，显示标尺辅助对齐',keys:['Ctrl+R']},
+      {act:'魔棒选择结构层、土层等分区',keys:['W']},
+      {act:'新建图层并填充对应材质色',keys:['Ctrl+Shift+N','Alt+Delete']},
+      {act:'拖入车辆人物，自由变换校准尺度',keys:['Ctrl+T']},
+      {act:'文字工具添加尺寸与图例说明',keys:['T']},
+      {act:'另存为图片或 PDF',keys:['Ctrl+Shift+S']}
+    ]}
+};
+
+function renderSop(){
+  const data = SOP_DATA[sopTab];
+  const html =
+  '<div class="view-head"><h1>'+L('标准作业流程','Standard Operating Procedure')+'</h1>'+
+    '<p>'+L('把每次出图固化为固定步骤，配合工作台提示词使用，减少返工与生图额度浪费。','Fixed steps to cut rework and wasted generations.')+'</p></div>'+
+  '<div class="sop-tabs">' + Object.keys(SOP_DATA).map(function(k){
+      return '<button class="sop-tab'+(sopTab===k?' active':'')+'" data-sop="'+k+'">'+SOP_DATA[k].label+'</button>';
+    }).join('') + '</div>'+
+  data.steps.map(function(st){
+    return '<div class="sop-step"><div class="step-num">·</div><div class="step-body"><h3>'+st.title+'</h3><ul>'+
+      st.items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul>'+
+      (st.keys.length?'<div class="tpl-actions" style="margin-top:9px">'+st.keys.map(function(k){
+        return '<span class="key '+(k.type==='g'?'g':'')+'">'+k.t+'</span>';}).join('')+'</div>':'')+
+      '</div></div>';
+  }).join('');
+  $('#mountSop').innerHTML = html;
+  $all('.sop-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){ sopTab = tab.dataset.sop; renderSop(); });
+  });
+}
+
+function fmtTime(iso){
+  const d = new Date(iso), p = function(n){return String(n).padStart(2,'0');};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'\n'+p(d.getHours())+':'+p(d.getMinutes());
+}
+function renderHistory(){
+  let html =
+  '<div class="view-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap"><div><h1>'+L('历史记录','History')+'</h1>'+
+    '<p>'+L('每次复制提示词都会自动留存，最多保留 60 条，数据保存在本机浏览器。','Every copied prompt is saved here (up to 60), stored locally.')+'</p></div>'+
+    (store.history.length?'<button class="btn btn-ghost btn-sm" id="clearHist">'+L('清空历史','Clear all')+'</button>':'')+'</div>';
+  if(!store.history.length){
+    html += '<div class="empty"><svg viewBox="0 0 24 24" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><p>'+L('暂无历史记录，去工作台生成并复制一条提示词','No history yet. Generate and copy a prompt.')+'</p></div>';
+  }else{
+    html += store.history.map(function(h){
+      return '<div class="hist-item"><div class="hist-time">'+fmtTime(h.time).replace('\n','<br>')+'</div>'+
+        '<div class="hist-body"><h3>'+h.summary+'</h3><p>'+WORKFLOWS[h.workflow].name+' · '+h.tool+'</p></div>'+
+        '<div class="hist-actions"><button class="btn btn-ghost btn-sm" data-hcopy="'+h.id+'">'+L('复制正文','Copy')+'</button>'+
+        '<button class="btn btn-ghost btn-sm" data-hneg="'+h.id+'">'+L('负向','Neg')+'</button>'+
+        '<button class="btn btn-ghost btn-sm" data-hdel="'+h.id+'">'+L('删除','Del')+'</button></div></div>';
+    }).join('');
+  }
+  $('#mountHistory').innerHTML = html;
+  const clear = $('#clearHist');
+  if(clear) clear.addEventListener('click',function(){
+    store.history = []; saveStore(); updateHistBadge(); renderHistory();
+    toast(L('历史已清空','Cleared'));
+  });
+  $all('[data-hcopy]').forEach(function(b){
+    b.addEventListener('click',function(){
+      const h = findById(store.history,b.dataset.hcopy);
+      if(h) copyText(h.text,L('已复制','Copied'));
+    });
+  });
+  $all('[data-hneg]').forEach(function(b){
+    b.addEventListener('click',function(){
+      const h = findById(store.history,b.dataset.hneg);
+      if(h) copyText(h.neg||'',L('负向词已复制','Neg copied'));
+    });
+  });
+  $all('[data-hdel]').forEach(function(b){
+    b.addEventListener('click',function(){
+      const i = store.history.findIndex(function(x){return x.id===b.dataset.hdel;});
+      if(i>=0){ store.history.splice(i,1); saveStore(); updateHistBadge(); renderHistory(); }
+    });
+  });
+}
+
+
+/* 初始化 */
+loadStore(); updateHistBadge(); renderStudio();
+
+/* js-anchor */
+</script>
+</body>
+</html>
